@@ -382,7 +382,6 @@ class JwtService {
     return axios.put(`${this.jwtConfig.roleEndpoint}/${id}`, payload); 
   }
 
-
 }
 
 const jwt = new JwtService();
