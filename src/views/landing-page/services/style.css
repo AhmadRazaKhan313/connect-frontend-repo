@@ -1,0 +1,26 @@
+.services {
+    width: 100%;
+    height: auto;
+    padding: 5% 10% 10px 10%;
+}
+
+.services .heading {
+    font-size: 5vw;
+    line-height: 110%;
+    font-family: 'poppins';
+    font-weight: 700;
+    color: black
+}
+
+.services .heading span {
+    color: #f07911;
+}
+
+.services .text {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 1.7vw;
+    line-height: 120%;
+    width: 55%;
+}
