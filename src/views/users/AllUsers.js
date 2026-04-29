@@ -71,7 +71,6 @@ export default function AllUsers() {
     useEffect(() => {
         setFilters(['fullname', 'userId', 'cnic', 'mobile', 'email', 'address']);
         getAllUsers();
-        // platformSuperAdmin ke liye organizations load karo
         if (isPlatformSuperAdmin) {
             jwt.getAllOrganizations()
                 .then((res) => setOrganizations(res?.data || []))

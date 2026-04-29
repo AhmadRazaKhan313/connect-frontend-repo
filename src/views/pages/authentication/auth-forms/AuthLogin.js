@@ -56,8 +56,6 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                         .then((orgRes) => {
                                             const subdomain = orgRes?.data?.subdomain;
                                             if (subdomain) {
-                                                // localhost ki storage mein bhi save karo
-                                                // taake localhost:3000 pe wapas aa sakein
                                                 // localStorage.setItem('connect_last_subdomain', subdomain);
                                                 // localStorage.setItem('connect_isLogin', 'true');
                                                 

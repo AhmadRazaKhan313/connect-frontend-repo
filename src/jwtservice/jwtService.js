@@ -216,6 +216,13 @@ class JwtService {
   getAllStaffs() {
     return axios.get(this.jwtConfig.staffEndpoint);
   }
+  updateStaff(id, payload) {
+    return axios.patch(`${this.jwtConfig.staffEndpoint}/${id}`, payload);
+  }
+
+  deleteStaff(id) {
+    return axios.delete(`${this.jwtConfig.staffEndpoint}/${id}`);
+  }
 
   getAllPartners() {
     return axios.get(`${this.jwtConfig.staffEndpoint}/getAllPartners`);
@@ -381,6 +388,7 @@ class JwtService {
   updateRole(id, payload) { 
     return axios.put(`${this.jwtConfig.roleEndpoint}/${id}`, payload); 
   }
+  
 
 }
 

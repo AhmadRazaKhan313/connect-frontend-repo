@@ -41,7 +41,6 @@ function AppContextContainer({ children }) {
             jwt.getOrganizationById(user.organizationId)
                 .then((res) => {
                     setOrgFeatures(res?.data?.features);
-                    // Organization colors set karo
                     if (res?.data?.primaryColor) {
                         setOrgColors({
                             primaryColor: res?.data?.primaryColor || '#f07911',

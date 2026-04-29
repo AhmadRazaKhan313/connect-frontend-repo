@@ -6,7 +6,9 @@ import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import useOrgTheme from 'utils/useOrgTheme';
 
-const CardWrapper = styled(MainCard)(({ primaryColor }) => ({
+const CardWrapper = styled(MainCard, {
+    shouldForwardProp: (prop) => prop !== 'primaryColor'
+})(({ primaryColor }) => ({
     backgroundColor: `${primaryColor} !important`,
     color: '#fff',
     overflow: 'hidden',

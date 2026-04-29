@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
     Paper, Table, TableBody, TableCell, TableContainer,
-    TableHead, TableRow, Button, Alert, Chip, Box, Typography
+    TableHead, TableRow, Button, Alert, Chip, Box, Typography,
+    IconButton, Tooltip
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import useOrgTheme from 'utils/useOrgTheme';
 import jwt from 'jwtservice/jwtService';
 import { useNavigate } from 'react-router';
@@ -29,7 +32,7 @@ export default function AllRoles() {
                 setIsLoading(false);
             })
             .catch((err) => {
-                setErrorMessage(err?.response?.data?.message || 'Roles load nahi huin');
+                setErrorMessage(err?.response?.data?.message || 'Role not Loaded');
                 setIsError(true);
                 setIsLoading(false);
             });
@@ -39,7 +42,7 @@ export default function AllRoles() {
         if (window.confirm('Are you sure you want to delete this role?')) {
             jwt.deleteRole(id)
                 .then(() => {
-                    setRoles((prev) => prev.filter((r) => r._id !== id));
+                    setRoles((prev) => prev.filter((r) => r.id !== id));
                 })
                 .catch((err) => alert(err?.response?.data?.message));
         }
@@ -73,9 +76,9 @@ export default function AllRoles() {
                     </TableHead>
                     <TableBody>
                         {roles.map((role, index) => {
-                            const isOwnRole = currentUser?.roleId === role._id;
+                            const isOwnRole = currentUser?.roleId === role.id;
                             return (
-                                <TableRow key={role._id}>
+                                <TableRow key={role.id}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>
                                         <Typography fontWeight="bold">{role.name}</Typography>
@@ -94,24 +97,20 @@ export default function AllRoles() {
                                         </Box>
                                     </TableCell>
                                     <TableCell>
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ mr: 1 }}
-                                            onClick={() => navigate(`/dashboard/edit-role/${role._id}`)}
-                                        >
-                                            Edit
-                                        </Button>
-                                        {!isOwnRole && (
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                color="error"
-                                                onClick={() => handleDelete(role._id)}
-                                            >
-                                                Delete
-                                            </Button>
-                                        )}
+                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                            <Tooltip title="Edit">
+                                                <IconButton size="small" onClick={() => navigate(`/dashboard/edit-role/${role.id}`)}>
+                                                    <EditIcon fontSize="small" sx={{ color: primaryColor }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                            {!isOwnRole && (
+                                                <Tooltip title="Delete">
+                                                    <IconButton size="small" onClick={() => handleDelete(role.id)}>
+                                                        <DeleteIcon fontSize="small" sx={{ color: '#d32f2f' }} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             );
