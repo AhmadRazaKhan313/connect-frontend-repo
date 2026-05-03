@@ -156,7 +156,7 @@ class JwtService {
   }
 
   deletePackage(id) {
-    return axios.delete(`${this.jwtConfig.packageEndpoint}/${isp}`);
+    return axios.delete(`${this.jwtConfig.packageEndpoint}/${id}`);
   }
 
   createUser(payload) {

@@ -70,7 +70,7 @@ export default function AllInvoices() {
     const [startDate, setStartDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
     const [endDate, setEndDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
     const [total, setTotal] = useState(0);
-    const { primaryColor: colorBg, tableHeaderStyle: style } = useOrgTheme();
+    const { tableHeaderStyle: style } = useOrgTheme();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
@@ -127,7 +127,6 @@ export default function AllInvoices() {
                 );
                 setData(rowsData);
                 setTotal(res?.data?.total);
-                setColorBg(res?.data?.entries[0]?.isp?.color);
                 setIsLoading(false);
                 setIsError(false);
             })
@@ -234,7 +233,7 @@ export default function AllInvoices() {
                                     <TableBody>
                                         {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
                                             return (
-                                                <TableRow key={index}>
+                                                <TableRow key={index} hover sx={{ '&:last-child td': { border: 0 }, '&:hover': { backgroundColor: 'rgba(0,0,0,0.02)' } }}>
                                                     <TableCell>{index + 1}</TableCell>
                                                     <TableCell>{row.isp}</TableCell>
                                                     <TableCell>{row.userId}</TableCell>

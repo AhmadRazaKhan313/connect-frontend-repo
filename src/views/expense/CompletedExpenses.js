@@ -269,8 +269,7 @@ export default function CompletedExpenses() {
                                         {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
                                             return (
                                                 <TableRow
-                                                    role="checkbox"
-                                                    tabIndex={-1}
+                                                    
                                                     key={index}
                                                 >
                                                     <TableCell style={{ color: getColorByStatus(row) }}>{index + 1}</TableCell>

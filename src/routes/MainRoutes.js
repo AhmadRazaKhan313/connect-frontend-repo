@@ -49,9 +49,6 @@ const EditRole = Loadable(lazy(() => import('views/roles/EditRole')));
 // ==============================|| MAIN ROUTING ||============================== //
 
 const checkLogin = (element) => {
-    if (window.location.hostname === 'localhost') {
-        return <Navigate to="/" replace={true} />;
-    }
     if (jwt.getIsLogin() !== true) return <Navigate to="/login" replace={true} />;
     return element;
 };
@@ -64,13 +61,13 @@ const MainRoutes = {
         { path: '/dashboard/add-staff', element: checkLogin(<AddStaff />) },
         { path: '/dashboard/all-staff', element: checkLogin(<AllStaff />) },
         { path: '/dashboard/add-isp', element: checkLogin(<AddISP />) },
-        { path: '/dashboard/edit-isp', element: checkLogin(<EditISP />) },
+        { path: '/dashboard/edit-isp/:id', element: checkLogin(<EditISP />) },
         { path: '/dashboard/all-isps', element: checkLogin(<ViewAllISPs />) },
         { path: '/dashboard/add-package', element: checkLogin(<AddPackage />) },
         { path: '/dashboard/edit-package/:packageId', element: checkLogin(<EditPackage />) },
         { path: '/dashboard/all-packages', element: checkLogin(<AllPackages />) },
         { path: '/dashboard/create-entry', element: checkLogin(<AddEntry />) },
-        { path: '/dashboard/edit-entry', element: checkLogin(<EditEntry />) },
+        { path: '/dashboard/edit-entry/:id', element: checkLogin(<EditEntry />) },
         { path: '/dashboard/all-entries', element: checkLogin(<AllEntries />) },
         { path: '/dashboard/pending-entries', element: checkLogin(<PendingEntries />) },
         { path: '/dashboard/complete-payment/:id', element: checkLogin(<CompletePayment />) },

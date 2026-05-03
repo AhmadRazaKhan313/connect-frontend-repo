@@ -9,12 +9,14 @@ import TableRow from '@mui/material/TableRow';
 import {
     Alert, Box, Button, Dialog, DialogActions, DialogContent,
     DialogTitle, FormControl, Grid, IconButton,
-    InputLabel, MenuItem, OutlinedInput, Select, Tooltip
+    InputLabel, MenuItem, OutlinedInput, Select, Tooltip, Typography
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { STAFF_TYPES } from 'utils/Constants';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import jwt from 'jwtservice/jwtService';
 import useAppContext from 'context/useAppContext';
 import useOrgTheme from 'utils/useOrgTheme';
@@ -38,6 +40,7 @@ export default function AllStaff() {
 
     const { data, setData, filteredData, setFilteredData, setFilters } = useAppContext();
     const { tableHeaderStyle: style, primaryColor } = useOrgTheme();
+    const navigate = useNavigate();
 
     const iconStyle = { color: primaryColor };
 
@@ -119,6 +122,22 @@ export default function AllStaff() {
 
     return (
         <Paper sx={{ width: '100%', overflow: 'hidden', mt: 4 }}>
+            {/* Header row: title + Add Staff button */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, pt: 2, pb: 1 }}>
+                <Typography variant="h5" fontWeight={600}>All Staff</Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate('/dashboard/add-staff')}
+                    sx={{
+                        backgroundColor: primaryColor,
+                        '&:hover': { backgroundColor: primaryColor, opacity: 0.9 }
+                    }}
+                >
+                    Add Staff
+                </Button>
+            </Box>
+
             {isLoading && <h3>Loading...!</h3>}
             {isError ? (
                 <Alert severity="error">{errorMessage}</Alert>
@@ -143,7 +162,7 @@ export default function AllStaff() {
                                 {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
                                     <TableRow
                                         key={index}
-                                        style={{ backgroundColor: row?.type === STAFF_TYPES.partner ? '#f0f0d2' : 'white' }}
+                                        hover sx={{ '&:last-child td': { border: 0 }, '&:hover': { backgroundColor: 'rgba(0,0,0,0.02)' } }} style={{ backgroundColor: row?.type === STAFF_TYPES.partner ? '#f0f0d2' : 'transparent' }}
                                     >
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{row?.fullname}</TableCell>

@@ -3,9 +3,9 @@ import { useTheme } from '@mui/material/styles';
 import { Box } from '@mui/system';
 import { Field, Formik } from 'formik';
 import jwt from 'jwtservice/jwtService';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CirclePicker } from 'react-color';
-import { useLocation, useNavigate } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import SimpleButton from 'ui-component/SimpleButton';
 
 import { AddISPValidationSchema } from '../../utils/ValidationSchemas';
@@ -13,23 +13,38 @@ import { AddISPValidationSchema } from '../../utils/ValidationSchemas';
 function EditISP() {
     const theme = useTheme();
     const navigate = useNavigate();
-    const { isp } = useLocation()?.state;
+    const { id } = useParams();
+    const [isp, setIsp] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMssage] = useState('');
 
+    useEffect(() => {
+        jwt.getIspById(id)
+            .then((res) => {
+                setIsp(res?.data);
+                setIsFetching(false);
+            })
+            .catch((err) => {
+                setErrorMssage(err?.response?.data?.message || 'Failed to load ISP');
+                setIsError(true);
+                setIsFetching(false);
+            });
+    }, [id]);
+
     const initialValues = {
-        name: isp?.name,
-        vlan: isp?.vlan,
-        openingBalance: isp?.openingBalance,
-        staticIpRate: isp?.staticIpRate,
-        color: isp?.color
+        name: isp?.name || '',
+        vlan: isp?.vlan || '',
+        openingBalance: isp?.openingBalance || '',
+        staticIpRate: isp?.staticIpRate || '',
+        color: isp?.color || ''
     };
 
     const onSubmit = (values) => {
         setIsLoading(true);
-        jwt.editIsp(isp?.id, values)
-            .then((res) => {
+        jwt.editIsp(id, values)
+            .then(() => {
                 setIsLoading(false);
                 alert('Isp Edited');
                 navigate('/dashboard/all-isps');
@@ -40,6 +55,8 @@ function EditISP() {
                 setErrorMssage(err?.response?.data?.message);
             });
     };
+
+    if (isFetching) return <p>Loading...</p>;
 
     return (
         <>

@@ -1,38 +1,56 @@
-// assets
-import { IconNetwork } from '@tabler/icons';
+import RouterIcon from '@mui/icons-material/Router';
 import jwt from 'jwtservice/jwtService';
 import { STAFF_TYPES } from 'utils/Constants';
 
-// ==============================|| EXTRA ISP MENU ITEMS ||============================== //
-let children = [];
-(jwt.getUser()?.type === 'orgAdmin' || jwt.getUser()?.type === 'orgSuperAdmin') &&
-    children.push({
-        id: 'add-isp',
-        title: 'Add ISP',
-        type: 'item',
-        url: '/dashboard/add-isp',
-        target: false
-    });
-children.push({
-    id: 'all-isps',
-    title: 'All ISPs',
-    type: 'item',
-    url: '/dashboard/all-isps',
-    target: false
-});
-const isps = {
-    id: 'isps',
-    title: 'ISPs',
-    type: 'group',
-    children: [
-        {
-            id: 'add',
-            title: 'Manage ISPs',
-            type: 'collapse',
-            icon: IconNetwork,
-            children
-        }
-    ]
-};
+// Admin ke liye: Add ISP bhi hoga + All ISPs — 2+ items so dropdown
+// Staff ke liye: sirf All ISPs — direct item (no dropdown)
+
+const isAdmin = jwt.getUser()?.type === STAFF_TYPES.admin;
+
+const isps = isAdmin
+    ? {
+          id: 'isps',
+          title: 'ISPs',
+          type: 'group',
+          children: [
+              {
+                  id: 'isps-collapse',
+                  title: 'ISPs',
+                  type: 'collapse',
+                  icon: RouterIcon,
+                  children: [
+                      {
+                          id: 'all-isps',
+                          title: 'All ISPs',
+                          type: 'item',
+                          url: '/dashboard/all-isps',
+                          breadcrumbs: false
+                      },
+                      {
+                          id: 'add-isp',
+                          title: 'Add ISP',
+                          type: 'item',
+                          url: '/dashboard/add-isp',
+                          breadcrumbs: false
+                      }
+                  ]
+              }
+          ]
+      }
+    : {
+          id: 'isps',
+          title: 'ISPs',
+          type: 'group',
+          children: [
+              {
+                  id: 'all-isps',
+                  title: 'All ISPs',
+                  type: 'item',
+                  url: '/dashboard/all-isps',
+                  icon: RouterIcon,
+                  breadcrumbs: false
+              }
+          ]
+      };
 
 export default isps;

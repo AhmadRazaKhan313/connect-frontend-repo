@@ -7,6 +7,16 @@ import { useNavigate, useParams } from 'react-router';
 import SimpleButton from 'ui-component/SimpleButton';
 import { HexColorPicker } from 'react-colorful';
 
+const FEATURE_LABELS = {
+    smsAlerts:       'SMS Alerts',
+    invoicing:       'Invoicing',
+    expenses:        'Expenses',
+    extraIncome:     'Extra Income',
+    staffManagement: 'Staff Management',
+    ispManagement:   'ISP Management',
+    dashboard:       'Dashboard',
+};
+
 // Reusable color picker component
 const ColorPickerField = ({ label, value, onChange }) => {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -224,7 +234,7 @@ function EditOrganization() {
                                                 onChange={(e) => setFieldValue(`features.${feature}`, e.target.checked)}
                                             />
                                         }
-                                        label={feature}
+                                        label={FEATURE_LABELS[feature] || feature}
                                     />
                                 </Grid>
                             ))}

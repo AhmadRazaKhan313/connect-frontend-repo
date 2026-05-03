@@ -1,4 +1,5 @@
 import jwt from 'jwtservice/jwtService';
+import { STAFF_TYPES } from 'utils/Constants';
 import dashboard from './dashboard';
 import entries from './entries';
 import expenses from './expenses';
@@ -10,44 +11,31 @@ import extraIncome from './extra-income';
 import organizations from './organizations';
 import roles from './roles';
 
-const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
+// Platform Super Admin (HQ) — sirf dashboard + organizations
+const PLATFORM_SUPER_ADMIN = [dashboard, organizations];
 
-const PLATFORM_SUPER_ADMIN = [dashboard, organizations, roles, isps, staff, users, expenses, entries, invoices, extraIncome];
+// Org Super Admin — full access with roles
+const ORG_SUPER_ADMIN = [dashboard, isps, staff, users, expenses, entries, invoices, extraIncome, roles];
 
-const getFilteredMenu = (type, role, orgFeatures) => {
-    const isAdmin = type === 'orgAdmin' || type === 'orgSuperAdmin' || role === 'orgSuperAdmin';
+// Org Admin — full access with roles
+const ADMIN = [dashboard, isps, staff, users, expenses, entries, invoices, extraIncome, roles];
 
-    const menu = [dashboard];
+// Org Staff — limited
+const STAFF = [dashboard, isps, users, expenses, entries, invoices, extraIncome];
 
-    // orgFeatures null ho toh sab show karo
-    if (!orgFeatures) {
-        if (isAdmin) return [dashboard, isps, staff, users, expenses, entries, invoices, extraIncome, roles];
-        return [dashboard, isps, users, entries];
-    }
+const getMenuItems = () => {
+    const userType = jwt.getUser()?.type;
 
-    if (orgFeatures?.ispManagement) menu.push(isps);
-    if (isAdmin && orgFeatures?.staffManagement) menu.push(staff);
-    menu.push(users);
-    if (isAdmin && orgFeatures?.expenses) menu.push(expenses);
-    menu.push(entries);
-    if (isAdmin && orgFeatures?.invoicing) menu.push(invoices);
-    if (isAdmin && orgFeatures?.extraIncome) menu.push(extraIncome);
-    if (isAdmin) menu.push(roles);
-
-    return menu;
+    return {
+        items:
+            userType === STAFF_TYPES.platformSuperAdmin
+                ? PLATFORM_SUPER_ADMIN
+                : userType === STAFF_TYPES.orgSuperAdmin
+                ? ORG_SUPER_ADMIN
+                : userType === STAFF_TYPES.admin
+                ? ADMIN
+                : STAFF
+    };
 };
 
-export const getMenuItems = (orgFeatures) => {
-    const role = jwt.getUser()?.role;
-    const type = jwt.getUser()?.type;
-    const isSuperOrg = jwt.getUser()?.organizationId === MASTER_ORG_ID;
-
-    if (isSuperOrg) {
-        return PLATFORM_SUPER_ADMIN;
-    }
-
-    return getFilteredMenu(type, role, orgFeatures);
-};
-
-const menuItems = { items: [] };
-export default menuItems;
+export default getMenuItems;

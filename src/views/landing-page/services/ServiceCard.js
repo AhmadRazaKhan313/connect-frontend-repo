@@ -1,9 +1,9 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 
+// makeStyles v4 se inline styles pe migrate kiya — koi MUI dependency nahi
 export default function ServiceCard({ image, text, heading, height, headingfont, textFont }) {
-    const useStyles = makeStyles({
-        container: {
+    return (
+        <div style={{
             position: 'relative',
             width: '100%',
             height: height,
@@ -15,44 +15,41 @@ export default function ServiceCard({ image, text, heading, height, headingfont,
             marginTop: '10px',
             boxSizing: 'border-box',
             borderRadius: '20px'
-        },
-        heading: {
-            margin: 0,
-            fontSize: headingfont,
-            fontWeight: 'bold',
-            color: '#fff',
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-            lineHeight: '100%',
-            marginBottom: '20px'
-        },
-        text: {
-            margin: 0,
-            fontSize: textFont,
-            fontWeight: 'bold',
-            color: '#fff',
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-            lineHeight: '100%',
-            marginBottom: '20px'
-        },
-        image: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            zIndex: '-1',
-            borderRadius: '20px'
-        }
-    });
-
-    const classes = useStyles();
-
-    return (
-        <div className={classes.container}>
-            <img src={image} className={classes.image} alt="Background" />
-            <h1 className={classes.heading}>{heading}</h1>
-            <p className={classes.text}>{text}</p>
+        }}>
+            <img
+                src={image}
+                alt="Background"
+                style={{
+                    position: 'absolute',
+                    top: 0, left: 0,
+                    width: '100%', height: '100%',
+                    objectFit: 'cover',
+                    zIndex: '-1',
+                    borderRadius: '20px'
+                }}
+            />
+            <h1 style={{
+                margin: 0,
+                fontSize: headingfont,
+                fontWeight: 'bold',
+                color: '#fff',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                lineHeight: '100%',
+                marginBottom: '20px'
+            }}>
+                {heading}
+            </h1>
+            <p style={{
+                margin: 0,
+                fontSize: textFont,
+                fontWeight: 'bold',
+                color: '#fff',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                lineHeight: '100%',
+                marginBottom: '20px'
+            }}>
+                {text}
+            </p>
         </div>
     );
 }

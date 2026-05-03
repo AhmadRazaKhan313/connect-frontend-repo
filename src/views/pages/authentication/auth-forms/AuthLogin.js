@@ -6,7 +6,6 @@ import {
 } from '@mui/material';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
-import axios from 'axios';
 import useScriptRef from 'hooks/useScriptRef';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -47,36 +46,30 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                     const token = res.data.tokens.access.token;
                                     const refreshToken = res.data.tokens.refresh.token;
                                     const user = res?.data?.user;
-                                    const orgId = user?.organizationId;
+                                    const subdomain = res?.data?.subdomain;
 
-                                    if (orgId) {
-                                        axios.get(`http://localhost:4000/api/v1/organization/${orgId}`, {
-                                            headers: { Authorization: `Bearer ${token}` }
-                                        })
-                                        .then((orgRes) => {
-                                            const subdomain = orgRes?.data?.subdomain;
-                                            if (subdomain) {
-                                                // localStorage.setItem('connect_last_subdomain', subdomain);
-                                                // localStorage.setItem('connect_isLogin', 'true');
-                                                
+                                    const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
+                                    const isMasterAdmin = user?.organizationId === MASTER_ORG_ID;
 
-                                                const redirectUrl = `http://${subdomain}.localhost:3000/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`;
-                                                window.location.replace(redirectUrl);
-                                            } else {
-                                                setIsLoading(false);
-                                                setIsError(true);
-                                                setErrorMessage('Subdomain not found');
-                                            }
-                                        })
-                                        .catch(() => {
-                                            setIsLoading(false);
-                                            setIsError(true);
-                                            setErrorMessage('Organization not found');
-                                        });
+                                    if (isMasterAdmin) {
+                                        // Master org superadmin — koi subdomain nahi, seedha dashboard
+                                        jwt.setToken(token);
+                                        jwt.setRefreshToken(refreshToken);
+                                        jwt.setUser({ ...user, time: Date.now() });
+                                        jwt.setIsLogin(true);
+                                        window.location.replace('/dashboard');
+                                    } else if (subdomain) {
+                                        // Org user — subdomain pe redirect karo via auth-redirect
+                                        const isLocal = window.location.hostname === 'localhost';
+                                        const frontendBase = isLocal
+                                            ? `http://${subdomain}.localhost:3000`
+                                            : `https://${subdomain}.connectlodhran.com`;
+                                        const redirectUrl = `${frontendBase}/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`;
+                                        window.location.replace(redirectUrl);
                                     } else {
                                         setIsLoading(false);
                                         setIsError(true);
-                                        setErrorMessage('No organization assigned');
+                                        setErrorMessage('No organization subdomain found. Please contact support.');
                                     }
                                 })
                                 .catch((err) => {

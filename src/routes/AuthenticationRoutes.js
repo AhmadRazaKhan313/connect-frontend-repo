@@ -17,7 +17,7 @@ const checkLogin = (element) => {
     const hostname = window.location.hostname;
 
     if (hostname === 'localhost') {
-        localStorage.removeItem('connect_isLogin');
+        localStorage.removeItem('isLogin');
         localStorage.removeItem('connect_last_subdomain');
         return element;
     }

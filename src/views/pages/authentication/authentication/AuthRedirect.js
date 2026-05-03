@@ -12,7 +12,9 @@ const AuthRedirect = () => {
             try {
                 const user = JSON.parse(decodeURIComponent(userStr));
 
-                // Is subdomain ki storage mein save karo
+                // Purane cached colors clear karo — naya login, naya org ho sakta hai
+                localStorage.removeItem('org_colors');
+
                 jwt.setToken(token);
                 jwt.setRefreshToken(refreshToken);
                 jwt.setUser({ ...user, time: Date.now() });

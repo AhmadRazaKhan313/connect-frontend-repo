@@ -1,19 +1,13 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { useTheme } from '@mui/material/styles';
 import { Divider, List, Typography } from '@mui/material';
 
 // project imports
 import NavItem from '../NavItem';
 import NavCollapse from '../NavCollapse';
 
-// ==============================|| SIDEBAR MENU LIST GROUP ||============================== //
-
 const NavGroup = ({ item }) => {
-    const theme = useTheme();
-
-    // menu list collapse & items
     const items = item.children?.map((menu) => {
         switch (menu.type) {
             case 'collapse':
@@ -31,25 +25,26 @@ const NavGroup = ({ item }) => {
 
     return (
         <>
-            <List
-                subheader={
-                    item.title && (
-                        <Typography variant="caption" sx={{ ...theme.typography.menuCaption }} display="block" gutterBottom>
-                            {/* {item.title} */}
-                            {item.caption && (
-                                <Typography variant="caption" sx={{ ...theme.typography.subMenuCaption }} display="block" gutterBottom>
-                                    {item.caption}
-                                </Typography>
-                            )}
-                        </Typography>
-                    )
-                }
-            >
-                {items}
-            </List>
-
-            {/* group divider */}
-            <Divider sx={{ mt: 0.25, mb: 1.25 }} />
+            {item.title && (
+                <Typography
+                    variant="caption"
+                    sx={{
+                        display: 'block',
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: 'text.disabled',
+                        px: 1.5,
+                        pt: 1.5,
+                        pb: 0.5
+                    }}
+                >
+                    {item.title}
+                </Typography>
+            )}
+            <List disablePadding>{items}</List>
+            <Divider sx={{ mt: 0.5, mb: 1, borderColor: 'rgba(0,0,0,0.06)' }} />
         </>
     );
 };

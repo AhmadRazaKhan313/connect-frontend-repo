@@ -1,35 +1,20 @@
-// assets
-import { IconUsers } from '@tabler/icons';
+import GroupIcon from '@mui/icons-material/Group';
 
-// ==============================|| EXTRA ISP MENU ITEMS ||============================== //
+// Add + All only = sirf All show karo sidebar mein
+// Add User button AllUsers page ke andar hoga
 
 const users = {
     id: 'users',
-    title: 'users',
-    // caption: 'Handle your users',
+    title: 'Users',
     type: 'group',
     children: [
         {
-            id: 'add',
-            title: 'Manage Users',
-            type: 'collapse',
-            icon: IconUsers,
-            children: [
-                {
-                    id: 'add-user',
-                    title: 'Add User',
-                    type: 'item',
-                    url: '/dashboard/add-user',
-                    target: false
-                },
-                {
-                    id: 'all-users',
-                    title: 'All Users',
-                    type: 'item',
-                    url: '/dashboard/all-users',
-                    target: false
-                }
-            ]
+            id: 'all-users',
+            title: 'All Users',
+            type: 'item',
+            url: '/dashboard/all-users',
+            icon: GroupIcon,
+            breadcrumbs: false
         }
     ]
 };

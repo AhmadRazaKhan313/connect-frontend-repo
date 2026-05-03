@@ -4,21 +4,19 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router';
 
 // material-ui
-import { useTheme } from '@mui/material/styles';
 import { Collapse, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 // project imports
 import NavItem from '../NavItem';
 
-// assets
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { IconChevronDown, IconChevronUp } from '@tabler/icons';
-
-// ==============================|| SIDEBAR MENU LIST COLLAPSE ITEMS ||============================== //
-
 const NavCollapse = ({ menu, level }) => {
-    const theme = useTheme();
     const customization = useSelector((state) => state.customization);
+    const theme = useTheme();
+    const primary = theme.palette.primary.main;
 
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState(null);
@@ -29,6 +27,7 @@ const NavCollapse = ({ menu, level }) => {
     };
 
     const { pathname } = useLocation();
+
     const checkOpenForParent = (child, id) => {
         child.forEach((item) => {
             if (item.url === pathname) {
@@ -38,7 +37,6 @@ const NavCollapse = ({ menu, level }) => {
         });
     };
 
-    // menu collapse for sub-levels
     useEffect(() => {
         setOpen(false);
         setSelected(null);
@@ -53,9 +51,9 @@ const NavCollapse = ({ menu, level }) => {
                 }
             });
         }
+        // eslint-disable-next-line
     }, [pathname, menu.children]);
 
-    // menu collapse & item
     const menus = menu.children?.map((item) => {
         switch (item.type) {
             case 'collapse':
@@ -72,14 +70,13 @@ const NavCollapse = ({ menu, level }) => {
     });
 
     const Icon = menu.icon;
+    const isSelected = selected === menu.id;
+
     const menuIcon = menu.icon ? (
-        <Icon strokeWidth={1.5} size="1.3rem" style={{ marginTop: 'auto', marginBottom: 'auto' }} />
+        <Icon sx={{ fontSize: '1.2rem' }} />
     ) : (
         <FiberManualRecordIcon
-            sx={{
-                width: selected === menu.id ? 8 : 6,
-                height: selected === menu.id ? 8 : 6
-            }}
+            sx={{ width: isSelected ? 8 : 6, height: isSelected ? 8 : 6 }}
             fontSize={level > 0 ? 'inherit' : 'medium'}
         />
     );
@@ -88,35 +85,50 @@ const NavCollapse = ({ menu, level }) => {
         <>
             <ListItemButton
                 sx={{
-                    borderRadius: `${customization.borderRadius}px`,
+                    borderRadius: '8px',
                     mb: 0.5,
-                    alignItems: 'flex-start',
-                    backgroundColor: level > 1 ? 'transparent !important' : 'inherit',
-                    py: level > 1 ? 1 : 1.25,
-                    pl: `${level * 24}px`
+                    alignItems: 'center',
+                    py: level > 1 ? 0.75 : 1,
+                    pl: `${level > 1 ? level * 20 : 12}px`,
+                    pr: '12px',
+                    backgroundColor: isSelected ? `${primary}14` : 'transparent',
+                    color: isSelected ? primary : 'text.secondary',
+                    '&:hover': {
+                        backgroundColor: `${primary}12`,
+                        color: primary,
+                        '& .MuiListItemIcon-root': { color: primary }
+                    }
                 }}
-                selected={selected === menu.id}
+                selected={isSelected}
                 onClick={handleClick}
             >
-                <ListItemIcon sx={{ my: 'auto', minWidth: !menu.icon ? 18 : 36 }}>{menuIcon}</ListItemIcon>
+                <ListItemIcon
+                    sx={{
+                        my: 'auto',
+                        minWidth: !menu.icon ? 24 : 34,
+                        color: isSelected ? primary : 'text.secondary'
+                    }}
+                >
+                    {menuIcon}
+                </ListItemIcon>
                 <ListItemText
                     primary={
-                        <Typography variant={selected === menu.id ? 'h5' : 'body1'} color="inherit" sx={{ my: 'auto' }}>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                fontWeight: isSelected ? 600 : 400,
+                                fontSize: '0.875rem',
+                                color: isSelected ? primary : 'inherit'
+                            }}
+                        >
                             {menu.title}
                         </Typography>
                     }
-                    secondary={
-                        menu.caption && (
-                            <Typography variant="caption" sx={{ ...theme.typography.subMenuCaption }} display="block" gutterBottom>
-                                {menu.caption}
-                            </Typography>
-                        )
-                    }
                 />
                 {open ? (
-                    <IconChevronUp stroke={1.5} size="1rem" style={{ marginTop: 'auto', marginBottom: 'auto' }} />
+                    <ExpandLessIcon sx={{ fontSize: '1rem', color: isSelected ? primary : 'text.secondary' }} />
                 ) : (
-                    <IconChevronDown stroke={1.5} size="1rem" style={{ marginTop: 'auto', marginBottom: 'auto' }} />
+                    <ExpandMoreIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
                 )}
             </ListItemButton>
             <Collapse in={open} timeout="auto" unmountOnExit>
@@ -125,15 +137,15 @@ const NavCollapse = ({ menu, level }) => {
                     disablePadding
                     sx={{
                         position: 'relative',
-                        '&:after': {
+                        pl: 1,
+                        '&:before': {
                             content: "''",
                             position: 'absolute',
-                            left: '32px',
+                            left: '28px',
                             top: 0,
                             height: '100%',
                             width: '1px',
-                            opacity: 1,
-                            background: theme.palette.primary.light
+                            background: `${primary}30`
                         }
                     }}
                 >

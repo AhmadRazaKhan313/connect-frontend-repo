@@ -1,40 +1,38 @@
-// assets
-import { IconFileInvoice } from '@tabler/icons';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
-// ==============================|| EXTRA ISP MENU ITEMS ||============================== //
+// 3 items hain (Create, All, Pending) — dropdown rahega
 
 const entries = {
     id: 'entries',
-    title: 'entries',
-    // caption: 'Handle your invoices',
+    title: 'Entries',
     type: 'group',
     children: [
         {
-            id: 'add',
-            title: 'User Entry',
+            id: 'entries-collapse',
+            title: 'User Entries',
             type: 'collapse',
-            icon: IconFileInvoice,
+            icon: AssignmentIcon,
             children: [
-                {
-                    id: 'create-entry',
-                    title: 'Create Entry',
-                    type: 'item',
-                    url: '/dashboard/create-entry',
-                    target: false
-                },
                 {
                     id: 'all-entries',
                     title: 'All Entries',
                     type: 'item',
                     url: '/dashboard/all-entries',
-                    target: false
+                    breadcrumbs: false
                 },
                 {
                     id: 'pending-entries',
                     title: 'Pending Entries',
                     type: 'item',
                     url: '/dashboard/pending-entries',
-                    target: false
+                    breadcrumbs: false
+                },
+                {
+                    id: 'create-entry',
+                    title: 'Create Entry',
+                    type: 'item',
+                    url: '/dashboard/create-entry',
+                    breadcrumbs: false
                 }
             ]
         }

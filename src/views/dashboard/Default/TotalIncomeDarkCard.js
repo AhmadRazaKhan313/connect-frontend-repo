@@ -2,23 +2,19 @@ import PropTypes from 'prop-types';
 
 // material-ui
 import { styled, useTheme } from '@mui/material/styles';
-import { Avatar, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
+import { Avatar, Box, List, ListItem, ListItemAvatar, Typography } from '@mui/material';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
-
-// assets
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
-import { THEME_COLOR_DARK } from 'utils/Constants';
 import numeral from 'numeral';
 import numberToWords from 'number-to-words';
 import { capitalize } from 'utils/Functions';
 
-// styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    backgroundColor: `${theme.palette.primary.dark} !important`,
-    color: theme.palette.primary.light,
+    backgroundColor: `${theme.palette.primary.main} !important`,
+    color: '#fff',
     overflow: 'hidden',
     position: 'relative',
     '&:after': {
@@ -26,7 +22,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(210.04deg, ${theme.palette.primary[200]} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
+        background: 'rgba(255,255,255,0.12)',
         borderRadius: '50%',
         top: -30,
         right: -180
@@ -36,17 +32,16 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(140.9deg, ${theme.palette.primary[200]} -14.02%, rgba(144, 202, 249, 0) 77.58%)`,
+        background: 'rgba(255,255,255,0.08)',
         borderRadius: '50%',
         top: -160,
         right: -130
     }
 }));
 
-// ==============================|| DASHBOARD - TOTAL INCOME DARK CARD ||============================== //
-
 const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
     const theme = useTheme();
+
     return (
         <>
             {isLoading ? (
@@ -62,27 +57,21 @@ const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
                                         sx={{
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.largeAvatar,
-                                            backgroundColor: `${theme.palette.primary[800]} !important`,
+                                            backgroundColor: 'rgba(255,255,255,0.2) !important',
                                             color: '#fff'
                                         }}
                                     >
                                         <TableChartOutlinedIcon fontSize="inherit" />
                                     </Avatar>
                                 </ListItemAvatar>
-                                <Box
-                                    sx={{
-                                        py: 0,
-                                        mt: 0.45,
-                                        mb: 0.45
-                                    }}
-                                >
+                                <Box sx={{ py: 0, mt: 0.45, mb: 0.45 }}>
                                     <Typography variant="h2" sx={{ color: '#fff' }}>
                                         Rs. {numeral(total).format('0,0')}
-                                    </Typography>{' '}
-                                    <Typography variant="subtitle1" sx={{ color: 'primary.light', mt: 1.5 }}>
+                                    </Typography>
+                                    <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.75)', mt: 1.5 }}>
                                         {capitalize(numberToWords.toWords(total))}
                                     </Typography>
-                                    <Typography variant="subtitle1" sx={{ color: 'primary.light', mt: 1.5 }}>
+                                    <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.75)', mt: 0.5 }}>
                                         {title}
                                     </Typography>
                                 </Box>
@@ -96,7 +85,9 @@ const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
 };
 
 TotalIncomeDarkCard.propTypes = {
-    isLoading: PropTypes.bool
+    isLoading: PropTypes.bool,
+    total: PropTypes.number,
+    title: PropTypes.string
 };
 
 export default TotalIncomeDarkCard;

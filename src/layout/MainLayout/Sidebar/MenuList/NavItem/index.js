@@ -5,15 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
-import { Avatar, Chip, ListItemButton, ListItemIcon, ListItemText, Typography, useMediaQuery } from '@mui/material';
+import { ListItemButton, ListItemIcon, ListItemText, Typography, useMediaQuery } from '@mui/material';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 // project imports
 import { MENU_OPEN, SET_MENU } from 'store/actions';
-
-// assets
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-
-// ==============================|| SIDEBAR MENU LIST ITEMS ||============================== //
 
 const NavItem = ({ item, level }) => {
     const theme = useTheme();
@@ -22,22 +18,25 @@ const NavItem = ({ item, level }) => {
     const matchesSM = useMediaQuery(theme.breakpoints.down('lg'));
 
     const Icon = item.icon;
+    const isSelected = customization.isOpen.findIndex((id) => id === item?.id) > -1;
+
+    const primary = theme.palette.primary.main;
+
     const itemIcon = item?.icon ? (
-        <Icon stroke={1.5} size="1.3rem" />
+        <Icon sx={{ fontSize: '1.2rem' }} />
     ) : (
         <FiberManualRecordIcon
             sx={{
-                width: customization.isOpen.findIndex((id) => id === item?.id) > -1 ? 8 : 6,
-                height: customization.isOpen.findIndex((id) => id === item?.id) > -1 ? 8 : 6
+                width: isSelected ? 8 : 6,
+                height: isSelected ? 8 : 6,
+                color: isSelected ? '#fff' : 'text.secondary'
             }}
             fontSize={level > 0 ? 'inherit' : 'medium'}
         />
     );
 
     let itemTarget = '_self';
-    if (item.target) {
-        itemTarget = '_blank';
-    }
+    if (item.target) itemTarget = '_blank';
 
     let listItemProps = {
         component: forwardRef((props, ref) => <Link ref={ref} {...props} to={item.url} target={itemTarget} />)
@@ -51,7 +50,6 @@ const NavItem = ({ item, level }) => {
         if (matchesSM) dispatch({ type: SET_MENU, opened: false });
     };
 
-    // active menu item on page load
     useEffect(() => {
         const currentIndex = document.location.pathname
             .toString()
@@ -60,6 +58,7 @@ const NavItem = ({ item, level }) => {
         if (currentIndex > -1) {
             dispatch({ type: MENU_OPEN, id: item.id });
         }
+        // eslint-disable-next-line
     }, []);
 
     return (
@@ -67,40 +66,46 @@ const NavItem = ({ item, level }) => {
             {...listItemProps}
             disabled={item.disabled}
             sx={{
-                borderRadius: `${customization.borderRadius}px`,
+                borderRadius: '8px',
                 mb: 0.5,
-                alignItems: 'flex-start',
-                backgroundColor: level > 1 ? 'transparent !important' : 'inherit',
-                py: level > 1 ? 1 : 1.25,
-                pl: `${level * 24}px`
+                alignItems: 'center',
+                py: level > 1 ? 0.75 : 1,
+                pl: level > 1 ? `${level * 20}px` : '12px',
+                pr: '12px',
+                backgroundColor: isSelected ? `${primary} !important` : 'transparent',
+                color: isSelected ? '#fff' : 'text.secondary',
+                '&:hover': {
+                    backgroundColor: isSelected ? `${primary} !important` : `${primary}12`,
+                    color: isSelected ? '#fff' : primary,
+                    '& .MuiListItemIcon-root': { color: isSelected ? '#fff' : primary }
+                }
             }}
-            selected={customization.isOpen.findIndex((id) => id === item.id) > -1}
+            selected={isSelected}
             onClick={() => itemHandler(item.id)}
         >
-            <ListItemIcon sx={{ my: 'auto', minWidth: !item?.icon ? 18 : 36 }}>{itemIcon}</ListItemIcon>
+            <ListItemIcon
+                sx={{
+                    my: 'auto',
+                    minWidth: !item?.icon ? 24 : 34,
+                    color: isSelected ? '#fff' : 'text.secondary'
+                }}
+            >
+                {itemIcon}
+            </ListItemIcon>
             <ListItemText
                 primary={
-                    <Typography variant={customization.isOpen.findIndex((id) => id === item.id) > -1 ? 'h5' : 'body1'} color="inherit">
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            fontWeight: isSelected ? 600 : 400,
+                            color: isSelected ? '#fff' : 'inherit',
+                            fontSize: '0.875rem'
+                        }}
+                    >
                         {item.title}
                     </Typography>
                 }
-                secondary={
-                    item.caption && (
-                        <Typography variant="caption" sx={{ ...theme.typography.subMenuCaption }} display="block" gutterBottom>
-                            {item.caption}
-                        </Typography>
-                    )
-                }
             />
-            {item.chip && (
-                <Chip
-                    color={item.chip.color}
-                    variant={item.chip.variant}
-                    size={item.chip.size}
-                    label={item.chip.label}
-                    avatar={item.chip.avatar && <Avatar>{item.chip.avatar}</Avatar>}
-                />
-            )}
         </ListItemButton>
     );
 };

@@ -28,7 +28,7 @@ export default function AllRoles() {
         setIsLoading(true);
         jwt.getAllRoles()
             .then((res) => {
-                setRoles(res?.data);
+                setRoles(res?.data || []);
                 setIsLoading(false);
             })
             .catch((err) => {

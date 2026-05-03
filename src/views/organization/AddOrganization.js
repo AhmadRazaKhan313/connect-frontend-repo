@@ -1,4 +1,8 @@
-import { Alert, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput, Checkbox, FormControlLabel, Box, Typography, Paper, Popover } from '@mui/material';
+import {
+    Alert, Box, Checkbox, FormControl, FormControlLabel,
+    FormHelperText, Grid, InputLabel, OutlinedInput, Paper,
+    Popover, Typography
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Formik } from 'formik';
 import jwt from 'jwtservice/jwtService';
@@ -6,51 +10,44 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import SimpleButton from 'ui-component/SimpleButton';
 import { HexColorPicker } from 'react-colorful';
+import * as Yup from 'yup';
 
-// Reusable color picker component
+const FEATURE_LABELS = {
+    smsAlerts:       'SMS Alerts',
+    invoicing:       'Invoicing',
+    expenses:        'Expenses',
+    extraIncome:     'Extra Income',
+    staffManagement: 'Staff Management',
+    ispManagement:   'ISP Management',
+    dashboard:       'Dashboard',
+};
+
 const ColorPickerField = ({ label, value, onChange }) => {
     const [anchorEl, setAnchorEl] = useState(null);
-
-    const handleClick = (e) => setAnchorEl(e.currentTarget);
-    const handleClose = () => setAnchorEl(null);
     const open = Boolean(anchorEl);
 
     return (
         <Box>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>{label}</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {/* Color preview box — click to open picker */}
                 <Box
-                    onClick={handleClick}
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
                     sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 2,
-                        backgroundColor: value,
-                        border: '2px solid #e0e0e0',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        transition: 'transform 0.2s',
+                        width: 44, height: 44, borderRadius: 2,
+                        backgroundColor: value, border: '2px solid #e0e0e0',
+                        cursor: 'pointer', transition: 'transform 0.2s',
                         '&:hover': { transform: 'scale(1.05)' }
                     }}
                 />
-                {/* Hex input */}
                 <OutlinedInput
-                    size="small"
-                    value={value}
+                    size="small" value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    sx={{ width: 140, fontFamily: 'monospace' }}
+                    sx={{ width: 130, fontFamily: 'monospace' }}
                     inputProps={{ maxLength: 7 }}
                 />
             </Box>
-
-            {/* Color picker popover */}
-            <Popover
-                open={open}
-                anchorEl={anchorEl}
-                onClose={handleClose}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-            >
+            <Popover open={open} anchorEl={anchorEl} onClose={() => setAnchorEl(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}>
                 <Paper sx={{ p: 2 }}>
                     <HexColorPicker color={value} onChange={onChange} />
                     <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 1, fontFamily: 'monospace' }}>
@@ -62,112 +59,105 @@ const ColorPickerField = ({ label, value, onChange }) => {
     );
 };
 
+const validationSchema = Yup.object().shape({
+    name:      Yup.string().required('Organization name is required'),
+    email:     Yup.string().email('Invalid email').required('Email is required'),
+    subdomain: Yup.string()
+        .matches(/^[a-z0-9-]+$/, 'Lowercase letters, numbers and hyphen only')
+        .required('Subdomain is required'),
+    adminUser: Yup.object().shape({
+        name:     Yup.string().required('Admin name is required'),
+        email:    Yup.string().email('Invalid email').required('Admin email is required'),
+        password: Yup.string().min(6, 'Minimum 6 characters').required('Password is required'),
+    })
+});
+
 function AddOrganization() {
     const theme = useTheme();
     const navigate = useNavigate();
-
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
     const initialValues = {
-        name: '',
-        email: '',
-        mobile: '',
-        address: '',
-        subdomain: '',
-        primaryColor: '#f07911',
+        name:         '',
+        email:        '',
+        subdomain:    '',
+        primaryColor: '#4361ee',
+        secondaryColor: '#424242',
         secondaryColor: '#424242',
         features: {
-            smsAlerts: true,
-            invoicing: true,
-            expenses: true,
-            extraIncome: true,
-            staffManagement: true,
-            ispManagement: true,
-            dashboard: true
+            smsAlerts: true, invoicing: true, expenses: true,
+            extraIncome: true, staffManagement: true,
+            ispManagement: true, dashboard: true,
         },
         adminUser: {
-            name: '',
-            email: '',
-            password: '',
-            mobile: '',
-            cnic: '',
-            address: '',
+            name: '', email: '', password: '',
             type: 'orgAdmin',
-            share: 0
+            mobile: '00000000000', address: 'N/A', cnic: '0000000000000', share: 0,
         }
     };
 
     const onSubmit = (values, { resetForm }) => {
         setIsLoading(true);
-        jwt.createOrganization(values)
+        setIsError(false);
+        const payload = { ...values, mobile: '00000000000', address: 'N/A' };
+        jwt.createOrganization(payload)
             .then(() => {
                 setIsLoading(false);
-                alert('Organization Created!');
                 resetForm();
                 navigate('/dashboard/all-organizations');
             })
             .catch((err) => {
-                setErrorMessage(err?.response?.data?.message);
-                setIsError(true);
                 setIsLoading(false);
+                setIsError(true);
+                setErrorMessage(err?.response?.data?.message || 'Something went wrong');
             });
     };
 
     return (
-        <>
-            <h3>Add Organization</h3>
-            {isError && <Alert severity="error">{errorMessage}</Alert>}
-            <Formik initialValues={initialValues} onSubmit={onSubmit}>
-                {({ values, handleChange, handleBlur, handleSubmit, setFieldValue }) => (
+        <Box sx={{ maxWidth: 800 }}>
+            <Typography variant="h3" sx={{ mb: 0.5 }}>Add Organization</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Basic info to get started. Admin can update more details from settings later.
+            </Typography>
+
+            {isError && <Alert severity="error" sx={{ mb: 2 }}>{errorMessage}</Alert>}
+
+            <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
+                {({ values, errors, touched, handleChange, handleBlur, handleSubmit, setFieldValue }) => (
                     <form onSubmit={handleSubmit}>
 
-                        {/* Organization Info */}
-                        <h4>Organization Details</h4>
-                        <Grid container spacing={2}>
+                        {/* Organization */}
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>Organization</Typography>
+                        <Grid container spacing={2} sx={{ mb: 3 }}>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Organization Name</InputLabel>
-                                    <OutlinedInput name="name" value={values.name} onChange={handleChange} onBlur={handleBlur} label="Organization Name" />
+                                    <InputLabel>Organization Name *</InputLabel>
+                                    <OutlinedInput name="name" value={values.name} onChange={handleChange} onBlur={handleBlur} label="Organization Name *" />
+                                    {touched.name && errors.name && <FormHelperText error>{errors.name}</FormHelperText>}
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Email</InputLabel>
-                                    <OutlinedInput name="email" value={values.email} onChange={handleChange} onBlur={handleBlur} label="Email" />
+                                    <InputLabel>Email *</InputLabel>
+                                    <OutlinedInput name="email" value={values.email} onChange={handleChange} onBlur={handleBlur} label="Email *" />
+                                    {touched.email && errors.email && <FormHelperText error>{errors.email}</FormHelperText>}
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Mobile</InputLabel>
-                                    <OutlinedInput name="mobile" value={values.mobile} onChange={handleChange} onBlur={handleBlur} label="Mobile" />
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Address</InputLabel>
-                                    <OutlinedInput name="address" value={values.address} onChange={handleChange} onBlur={handleBlur} label="Address" />
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Subdomain</InputLabel>
+                                    <InputLabel>Subdomain *</InputLabel>
                                     <OutlinedInput
-                                        name="subdomain"
-                                        value={values.subdomain}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        label="Subdomain"
-                                        inputProps={{ pattern: '[a-z0-9\\-]+' }}
+                                        name="subdomain" value={values.subdomain}
+                                        onChange={handleChange} onBlur={handleBlur}
+                                        label="Subdomain *" inputProps={{ pattern: '[a-z0-9\\-]+' }}
                                     />
-                                    <FormHelperText>
-                                        Lowercase letters, numbers and hyphen only. Example: bahawalpur, multan-city
+                                    <FormHelperText error={touched.subdomain && Boolean(errors.subdomain)}>
+                                        {touched.subdomain && errors.subdomain ? errors.subdomain : 'e.g. bahawalpur or multan-city'}
                                     </FormHelperText>
                                 </FormControl>
                             </Grid>
-
-                            {/* Color Pickers */}
                             <Grid item xs={12} md={6}>
                                 <ColorPickerField
                                     label="Primary Color"
@@ -184,72 +174,59 @@ function AddOrganization() {
                             </Grid>
                         </Grid>
 
-                        {/* Feature Flags */}
-                        <h4>Features</h4>
-                        <Grid container spacing={1}>
-                            {Object.keys(values.features).map((feature) => (
-                                <Grid item xs={6} md={4} key={feature}>
+                        {/* Admin Account */}
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>Admin Account</Typography>
+                        <Grid container spacing={2} sx={{ mb: 3 }}>
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
+                                    <InputLabel>Admin Name *</InputLabel>
+                                    <OutlinedInput name="adminUser.name" value={values.adminUser.name} onChange={handleChange} onBlur={handleBlur} label="Admin Name *" />
+                                    {touched.adminUser?.name && errors.adminUser?.name && <FormHelperText error>{errors.adminUser.name}</FormHelperText>}
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
+                                    <InputLabel>Admin Email *</InputLabel>
+                                    <OutlinedInput name="adminUser.email" value={values.adminUser.email} onChange={handleChange} onBlur={handleBlur} label="Admin Email *" />
+                                    {touched.adminUser?.email && errors.adminUser?.email && <FormHelperText error>{errors.adminUser.email}</FormHelperText>}
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
+                                    <InputLabel>Password *</InputLabel>
+                                    <OutlinedInput type="password" name="adminUser.password" value={values.adminUser.password} onChange={handleChange} onBlur={handleBlur} label="Password *" />
+                                    {touched.adminUser?.password && errors.adminUser?.password && <FormHelperText error>{errors.adminUser.password}</FormHelperText>}
+                                </FormControl>
+                            </Grid>
+                        </Grid>
+
+                        {/* Features */}
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>Features</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                            All enabled by default. Turn off what this organization does not need.
+                        </Typography>
+                        <Grid container spacing={0.5} sx={{ mb: 3 }}>
+                            {Object.keys(values.features).map((key) => (
+                                <Grid item xs={6} md={4} key={key}>
                                     <FormControlLabel
                                         control={
                                             <Checkbox
-                                                checked={values.features[feature]}
-                                                onChange={(e) => setFieldValue(`features.${feature}`, e.target.checked)}
+                                                checked={values.features[key]}
+                                                onChange={(e) => setFieldValue(`features.${key}`, e.target.checked)}
+                                                size="small"
                                             />
                                         }
-                                        label={feature}
+                                        label={<Typography variant="body2">{FEATURE_LABELS[key] || key}</Typography>}
                                     />
                                 </Grid>
                             ))}
                         </Grid>
 
-                        {/* Admin User */}
-                        <h4>Admin User Details</h4>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Admin Name</InputLabel>
-                                    <OutlinedInput name="adminUser.name" value={values.adminUser.name} onChange={handleChange} onBlur={handleBlur} label="Admin Name" />
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Admin Email</InputLabel>
-                                    <OutlinedInput name="adminUser.email" value={values.adminUser.email} onChange={handleChange} onBlur={handleBlur} label="Admin Email" />
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Admin Password</InputLabel>
-                                    <OutlinedInput type="password" name="adminUser.password" value={values.adminUser.password} onChange={handleChange} onBlur={handleBlur} label="Admin Password" />
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Admin Mobile</InputLabel>
-                                    <OutlinedInput name="adminUser.mobile" value={values.adminUser.mobile} onChange={handleChange} onBlur={handleBlur} label="Admin Mobile" />
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Admin CNIC</InputLabel>
-                                    <OutlinedInput name="adminUser.cnic" value={values.adminUser.cnic} onChange={handleChange} onBlur={handleBlur} label="Admin CNIC" />
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-                                    <InputLabel>Admin Address</InputLabel>
-                                    <OutlinedInput name="adminUser.address" value={values.adminUser.address} onChange={handleChange} onBlur={handleBlur} label="Admin Address" />
-                                </FormControl>
-                            </Grid>
-                        </Grid>
-
-                        <Box sx={{ mt: 2 }}>
-                            <SimpleButton isValid={isLoading} title="Create Organization" />
-                        </Box>
+                        <SimpleButton isValid={isLoading} title="Create Organization" />
                     </form>
                 )}
             </Formik>
-        </>
+        </Box>
     );
 }
 
