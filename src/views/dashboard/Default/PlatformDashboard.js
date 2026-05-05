@@ -224,7 +224,7 @@ const PlatformDashboard = () => {
                                                     flexShrink: 0
                                                 }} />
                                                 <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
-                                                    {org.primaryColor || '#4361ee'}
+                                                    {(org.primaryColor || '#4361ee').replace('#', '')}
                                                 </Typography>
                                             </Box>
                                         </TableCell>

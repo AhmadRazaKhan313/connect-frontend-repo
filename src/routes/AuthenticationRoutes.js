@@ -8,6 +8,7 @@ import ApiConnectionError from 'views/error/ApiConnectionError';
 const LandingPage = Loadable(lazy(() => import('views/landing-page')));
 const AuthLogin = Loadable(lazy(() => import('views/pages/authentication/authentication/Login')));
 const AuthRedirect = Loadable(lazy(() => import('views/pages/authentication/authentication/AuthRedirect')));
+const Setup = Loadable(lazy(() => import('views/pages/authentication/authentication/Setup')));
 const NotFound = Loadable(lazy(() => import('views/error/NotFound')));
 
 
@@ -45,6 +46,7 @@ const AuthenticationRoutes = {
         { path: '/', element: checkLogin(<LandingPage />) },
         { path: '/login', element: checkLogin(<AuthLogin />) },
         { path: '/auth-redirect', element: <AuthRedirect /> },
+        { path: '/setup', element: <Setup /> },
         { path: '/api-error', element: <ApiConnectionError /> },
         { path: '*', element: <NotFound /> }
     ]
