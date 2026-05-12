@@ -9,11 +9,12 @@ import TableRow from '@mui/material/TableRow';
 import {
     Alert, Box, Button, Dialog, DialogActions, DialogContent,
     DialogTitle, FormControl, Grid, IconButton,
-    InputLabel, MenuItem, OutlinedInput, Select, Tooltip, Typography
+    InputLabel, MenuItem, OutlinedInput, Select, Tooltip, Typography, Chip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import LockIcon from '@mui/icons-material/Lock';
 import { STAFF_TYPES } from 'utils/Constants';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
@@ -41,6 +42,10 @@ export default function AllStaff() {
     const { data, setData, filteredData, setFilteredData, setFilters } = useAppContext();
     const { tableHeaderStyle: style, primaryColor } = useOrgTheme();
     const navigate = useNavigate();
+
+    // Logged in user
+    const currentUser = jwt.getUser();
+    const currentUserId = currentUser?.id || currentUser?._id;
 
     const iconStyle = { color: primaryColor };
 
@@ -71,7 +76,11 @@ export default function AllStaff() {
         setFilters(['fullname', 'type', 'share', 'cnic', 'mobile', 'email', 'address']);
         loadStaff();
         jwt.getAllRoles()
-            .then((res) => setRoles(res?.data || []))
+            .then((res) => {
+                // Sirf custom roles — system roles (isSystem:true) role dropdown mein nahi aane chahiye
+                const customRoles = (res?.data || []).filter((r) => !r.isSystem);
+                setRoles(customRoles);
+            })
             .catch(() => {});
     }, []);
 
@@ -101,6 +110,13 @@ export default function AllStaff() {
         if (!payload.roleId) delete payload.roleId;
         delete payload.id;
 
+        // Apna account edit kar rahe hain to role/type nahi bhejna
+        if (editStaff.id === currentUserId) {
+            delete payload.role;
+            delete payload.roleId;
+            delete payload.type;
+        }
+
         jwt.updateStaff(editStaff.id, payload)
             .then(() => {
                 setEditLoading(false);
@@ -114,25 +130,28 @@ export default function AllStaff() {
     };
 
     const handleDelete = (row) => {
+        if (row.id === currentUserId) {
+            alert('Aap apna khud ka account delete nahi kar sakte');
+            return;
+        }
         if (!window.confirm(`Delete staff "${row.fullname}"?`)) return;
         jwt.deleteStaff(row.id)
             .then(() => loadStaff())
             .catch((err) => alert(err?.response?.data?.message || 'Delete failed'));
     };
 
+    // Kya yeh logged-in user ka apna row hai
+    const isSelf = (row) => row.id === currentUserId;
+
     return (
         <Paper sx={{ width: '100%', overflow: 'hidden', mt: 4 }}>
-            {/* Header row: title + Add Staff button */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, pt: 2, pb: 1 }}>
                 <Typography variant="h5" fontWeight={600}>All Staff</Typography>
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={() => navigate('/dashboard/add-staff')}
-                    sx={{
-                        backgroundColor: primaryColor,
-                        '&:hover': { backgroundColor: primaryColor, opacity: 0.9 }
-                    }}
+                    sx={{ backgroundColor: primaryColor, '&:hover': { backgroundColor: primaryColor, opacity: 0.9 } }}
                 >
                     Add Staff
                 </Button>
@@ -162,10 +181,23 @@ export default function AllStaff() {
                                 {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
                                     <TableRow
                                         key={index}
-                                        hover sx={{ '&:last-child td': { border: 0 }, '&:hover': { backgroundColor: 'rgba(0,0,0,0.02)' } }} style={{ backgroundColor: row?.type === STAFF_TYPES.partner ? '#f0f0d2' : 'transparent' }}
+                                        hover
+                                        sx={{
+                                            '&:last-child td': { border: 0 },
+                                            backgroundColor: isSelf(row)
+                                                ? '#e8f5e9'  // Apna row green highlight
+                                                : row?.type === STAFF_TYPES.partner ? '#f0f0d2' : 'transparent'
+                                        }}
                                     >
                                         <TableCell>{index + 1}</TableCell>
-                                        <TableCell>{row?.fullname}</TableCell>
+                                        <TableCell>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                {row?.fullname}
+                                                {isSelf(row) && (
+                                                    <Chip label="You" size="small" color="success" sx={{ fontSize: 10, height: 18 }} />
+                                                )}
+                                            </Box>
+                                        </TableCell>
                                         <TableCell>{row?.type}</TableCell>
                                         <TableCell>{row?.share}</TableCell>
                                         <TableCell>{row?.email}</TableCell>
@@ -179,10 +211,16 @@ export default function AllStaff() {
                                                         <EditIcon fontSize="small" sx={iconStyle} />
                                                     </IconButton>
                                                 </Tooltip>
-                                                <Tooltip title="Delete">
-                                                    <IconButton size="small" onClick={() => handleDelete(row)}>
-                                                        <DeleteIcon fontSize="small" sx={{ color: '#d32f2f' }} />
-                                                    </IconButton>
+                                                <Tooltip title={isSelf(row) ? 'Apna account delete nahi kar sakte' : 'Delete'}>
+                                                    <span>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => handleDelete(row)}
+                                                            disabled={isSelf(row)}
+                                                        >
+                                                            <DeleteIcon fontSize="small" sx={{ color: isSelf(row) ? '#ccc' : '#d32f2f' }} />
+                                                        </IconButton>
+                                                    </span>
                                                 </Tooltip>
                                             </Box>
                                         </TableCell>
@@ -203,10 +241,26 @@ export default function AllStaff() {
                 </>
             )}
 
+            {/* Edit Dialog */}
             <Dialog open={editOpen} onClose={handleEditClose} maxWidth="md" fullWidth>
-                <DialogTitle>Edit Staff</DialogTitle>
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        Edit Staff
+                        {editStaff && isSelf(editStaff) && (
+                            <Chip label="Your Account" size="small" color="success" />
+                        )}
+                    </Box>
+                </DialogTitle>
                 <DialogContent>
                     {editError && <Alert severity="error" sx={{ mb: 2 }}>{editError}</Alert>}
+                    {editStaff && isSelf(editStaff) && (
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <LockIcon fontSize="small" />
+                                Aap apna Role aur Type nahi badal sakte — sirf profile info update ho sakti hai
+                            </Box>
+                        </Alert>
+                    )}
                     {editStaff && (
                         <Grid container spacing={2} sx={{ mt: 0.5 }}>
                             <Grid item xs={12} md={6}>
@@ -270,20 +324,30 @@ export default function AllStaff() {
                                     />
                                 </FormControl>
                             </Grid>
+
+                            {/* Staff Type — apna type nahi badal sakta */}
                             <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
+                                <FormControl fullWidth disabled={isSelf(editStaff)}>
                                     <InputLabel>Staff Type</InputLabel>
                                     <Select
                                         label="Staff Type"
-                                        value={['partner', 'staff'].includes(editStaff.type) ? editStaff.type : ''}
+                                        value={['partner', 'staff', 'orgStaff', 'orgAdmin'].includes(editStaff.type) ? editStaff.type : ''}
                                         onChange={(e) => setEditStaff({ ...editStaff, type: e.target.value })}
-                                        sx={{ paddingTop: '10px' }}
                                     >
+                                        <MenuItem value="orgAdmin">Org Admin</MenuItem>
+                                        <MenuItem value="orgStaff">Org Staff</MenuItem>
                                         <MenuItem value="partner">Partner</MenuItem>
                                         <MenuItem value="staff">Staff</MenuItem>
                                     </Select>
+                                    {isSelf(editStaff) && (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                                            <LockIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
+                                            <Typography variant="caption" color="text.secondary">Apna type nahi badal sakte</Typography>
+                                        </Box>
+                                    )}
                                 </FormControl>
                             </Grid>
+
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Share</InputLabel>
@@ -292,18 +356,19 @@ export default function AllStaff() {
                                         type="number"
                                         value={editStaff.share}
                                         onChange={(e) => setEditStaff({ ...editStaff, share: e.target.value })}
-                                        disabled={editStaff.type === 'staff'}
+                                        disabled={editStaff.type === 'staff' || editStaff.type === 'orgStaff'}
                                     />
                                 </FormControl>
                             </Grid>
+
+                            {/* Role assign — apna role nahi badal sakta, system roles nahi dikhte */}
                             <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
+                                <FormControl fullWidth disabled={isSelf(editStaff)}>
                                     <InputLabel>Assign Role (Optional)</InputLabel>
                                     <Select
                                         label="Assign Role (Optional)"
                                         value={editStaff.roleId || ''}
                                         onChange={(e) => setEditStaff({ ...editStaff, roleId: e.target.value })}
-                                        sx={{ paddingTop: '10px' }}
                                     >
                                         <MenuItem value="">-- No Role --</MenuItem>
                                         {roles.map((role) => (
@@ -312,6 +377,12 @@ export default function AllStaff() {
                                             </MenuItem>
                                         ))}
                                     </Select>
+                                    {isSelf(editStaff) && (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                                            <LockIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
+                                            <Typography variant="caption" color="text.secondary">Apna role nahi badal sakte</Typography>
+                                        </Box>
+                                    )}
                                 </FormControl>
                             </Grid>
                         </Grid>

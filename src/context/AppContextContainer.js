@@ -1,6 +1,7 @@
 import jwt from 'jwtservice/jwtService';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppContextProvider } from './AppContext';
+import { useLocation, useNavigate } from 'react-router';
 import moment from 'moment';
 
 function AppContextContainer({ children }) {
@@ -12,39 +13,81 @@ function AppContextContainer({ children }) {
     const [startDate, setStartDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
     const [endDate, setEndDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
 
-    // ── Org theme colors ──────────────────────────────────────
     const [orgColors, setOrgColors] = useState({
         primaryColor: null,
         secondaryColor: null
     });
 
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // ── Sync fresh user from DB ──────────────────────────────────────────────
+    // Fetches /auth/me on every route change + every 30s
+    // Ensures role changes take effect immediately without re-login
+    const syncUserFromDB = useCallback(async () => {
+        const token = jwt.getAccessToken?.() || localStorage.getItem('accessToken');
+        if (!token) return; // not logged in
+
+        try {
+            const res = await jwt.getMe();
+            if (!res?.data?.user) return;
+
+            const { user, isHQ, subdomain } = res.data;
+
+            // Build fresh user object same as login
+            const freshUser = { ...user, isHQ: isHQ || false, subdomain };
+
+            // Get current stored user
+            const currentUser = jwt.getUser();
+
+            // If role/type changed — update localStorage + force sidebar refresh
+            if (
+                currentUser?.role !== freshUser?.role ||
+                currentUser?.type !== freshUser?.type ||
+                currentUser?.roleId !== freshUser?.roleId
+            ) {
+                jwt.setUser(freshUser);
+                // Force full page reload to rebuild menu and clear stale state
+                window.location.reload();
+            }
+        } catch (err) {
+            // 401 = token expired/invalid → redirect to login
+            if (err?.response?.status === 401) {
+                jwt.logout?.();
+                navigate('/login');
+            }
+        }
+    }, [navigate]);
+
+    // Sync on every route change
+    useEffect(() => {
+        syncUserFromDB();
+    }, [location.pathname]);
+
+    // 30s interval hata diya — route change pe hi sync kaafi hai
+    // Interval se unnecessary reloads hote the
+
+    // ── Initial setup ────────────────────────────────────────────────────────
     useEffect(() => {
         getSmsBalance();
         fetchOrgColors();
-        // eslint-disable-next-line
     }, []);
 
     const fetchOrgColors = async () => {
         const user = jwt.getUser();
         if (!user) return;
-
         const orgId = user?.organizationId;
         if (!orgId) return;
-
-        // platformSuperAdmin ka koi org nahi hota — skip
         if (user?.type === 'platformSuperAdmin') return;
 
-        // Pehle cached colors check karo localStorage mein
         const cached = localStorage.getItem('org_colors');
         if (cached) {
             try {
-                const parsed = JSON.parse(cached);
-                setOrgColors(parsed);
+                setOrgColors(JSON.parse(cached));
                 return;
             } catch (_) {}
         }
 
-        // Cache nahi mila toh API se fetch karo
         try {
             const res = await jwt.getOrganization(orgId);
             const org = res?.data;
@@ -68,22 +111,15 @@ function AppContextContainer({ children }) {
     };
 
     const contextValues = {
-        data,
-        setData,
-        filteredData,
-        setFilteredData,
-        filters,
-        setFilters,
-        smsBalance,
-        getSmsBalance,
-        ispSelected,
-        setIspSelected,
-        startDate,
-        setStartDate,
-        endDate,
-        setEndDate,
-        orgColors,
-        fetchOrgColors
+        data, setData,
+        filteredData, setFilteredData,
+        filters, setFilters,
+        smsBalance, getSmsBalance,
+        ispSelected, setIspSelected,
+        startDate, setStartDate,
+        endDate, setEndDate,
+        orgColors, fetchOrgColors,
+        syncUserFromDB,
     };
 
     return <AppContextProvider value={contextValues}>{children}</AppContextProvider>;

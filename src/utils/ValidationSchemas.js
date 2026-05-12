@@ -2,10 +2,24 @@ import * as Yup from 'yup';
 
 export const AddISPValidationSchema = Yup.object().shape({
     name: Yup.string().required('ISP name is required'),
-    vlan: Yup.number().required('VLAN is requried'),
-    openingBalance: Yup.number().required('Opening Balance is requried'),
-    staticIpRate: Yup.number().required('Static Ip Rate is requried').min(0),
-    color: Yup.string().required('Color is requried')
+    vlan: Yup.number().required('VLAN is required'),
+    openingBalance: Yup.number().required('Opening Balance is required'),
+    staticIpRate: Yup.number().required('Static Ip Rate is required').min(0),
+    color: Yup.string().required('Color is required'),
+    // platformSuperAdmin ke liye organizationId required hai
+    organizationId: Yup.string().when('$isPlatformSuperAdmin', {
+        is: true,
+        then: Yup.string().required('Organization is required'),
+        otherwise: Yup.string().nullable()
+    }),
+});
+
+export const EditISPValidationSchema = Yup.object().shape({
+    name: Yup.string().required('ISP name is required'),
+    vlan: Yup.number().required('VLAN is required'),
+    openingBalance: Yup.number().required('Opening Balance is required'),
+    staticIpRate: Yup.number().required('Static IP Rate is required').min(0),
+    color: Yup.string().required('Color is required'),
 });
 
 export const AddPackageValidationSchema = Yup.object().shape({
@@ -37,21 +51,26 @@ export const AddUserValidationSchema = Yup.object().shape({
 });
 
 export const AddStaffValidationSchema = Yup.object().shape({
-    fullname: Yup.string().required('Full Name is requires'),
+    fullname: Yup.string().required('Full Name is required'),
     cnic: Yup.string()
         .matches(/^\d{13}$/, 'Invalid CNIC format')
-        .required('CNIC is requires'),
+        .required('CNIC is required'),
     mobile: Yup.string()
         .matches(/^92(3)\d{9}$/, 'Invalid phone number format')
-        .required('Mobile is requires'),
-    address: Yup.string().required('Address is requires'),
+        .required('Mobile is required'),
+    address: Yup.string().required('Address is required'),
     email: Yup.string().email().required('Email is required'),
     password: Yup.string().required('Password is required'),
-    type: Yup.string().required('Type is required'),
+    type: Yup.string().required('Staff Type is required'),
     share: Yup.number().when('type', {
         is: (val) => val === 'partner',
-        then: Yup.number().required('Share is required'),
+        then: Yup.number().required('Share is required for Partner'),
         otherwise: Yup.number()
+    }),
+    roleId: Yup.string().when('type', {
+        is: (val) => val === 'orgStaff' || val === 'partner',
+        then: Yup.string().required('Role assign karna zaroori hai'),
+        otherwise: Yup.string().nullable().notRequired()
     }),
     sendWelcomeMessage: Yup.boolean().required()
 });

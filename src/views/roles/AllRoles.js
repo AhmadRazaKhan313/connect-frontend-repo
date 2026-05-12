@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LockIcon from '@mui/icons-material/Lock';
 import useOrgTheme from 'utils/useOrgTheme';
 import jwt from 'jwtservice/jwtService';
 import { useNavigate } from 'react-router';
@@ -32,20 +33,77 @@ export default function AllRoles() {
                 setIsLoading(false);
             })
             .catch((err) => {
-                setErrorMessage(err?.response?.data?.message || 'Role not Loaded');
+                setErrorMessage(err?.response?.data?.message || 'Roles load nahi hue');
                 setIsError(true);
                 setIsLoading(false);
             });
     };
 
     const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this role?')) {
+        if (window.confirm('Kya aap yeh role delete karna chahte hain?')) {
             jwt.deleteRole(id)
-                .then(() => {
-                    setRoles((prev) => prev.filter((r) => r.id !== id));
-                })
+                .then(() => setRoles((prev) => prev.filter((r) => r.id !== id)))
                 .catch((err) => alert(err?.response?.data?.message));
         }
+    };
+
+    const systemRoles = roles.filter((r) => r.isSystem);
+    const customRoles = roles.filter((r) => !r.isSystem);
+
+    const RoleRow = ({ role, index, isSystem }) => {
+        const isOwnRole = currentUser?.roleId === role.id;
+        return (
+            <TableRow key={role.id} sx={{ backgroundColor: isSystem ? '#f9f9f9' : 'inherit' }}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {isSystem && (
+                            <Tooltip title="System Role — edit/delete nahi ho sakta">
+                                <LockIcon fontSize="small" sx={{ color: '#9e9e9e' }} />
+                            </Tooltip>
+                        )}
+                        <Typography fontWeight="bold">{role.name}</Typography>
+                        {isSystem && (
+                            <Chip label="System" size="small" sx={{ fontSize: 10, height: 18, backgroundColor: '#e3f2fd', color: '#1565c0' }} />
+                        )}
+                    </Box>
+                    {role.description && (
+                        <Typography variant="caption" color="text.secondary">{role.description}</Typography>
+                    )}
+                </TableCell>
+                <TableCell>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {isSystem ? (
+                            <Chip label="All Permissions" size="small" color="success" variant="outlined" />
+                        ) : (
+                            role.permissions?.map((p) => (
+                                <Chip key={p} label={p} size="small" color="primary" variant="outlined" />
+                            ))
+                        )}
+                    </Box>
+                </TableCell>
+                <TableCell>
+                    {isSystem ? (
+                        <Typography variant="caption" color="text.secondary">—</Typography>
+                    ) : (
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Tooltip title="Edit">
+                                <IconButton size="small" onClick={() => navigate(`/dashboard/edit-role/${role.id}`)}>
+                                    <EditIcon fontSize="small" sx={{ color: primaryColor }} />
+                                </IconButton>
+                            </Tooltip>
+                            {!isOwnRole && (
+                                <Tooltip title="Delete">
+                                    <IconButton size="small" onClick={() => handleDelete(role.id)}>
+                                        <DeleteIcon fontSize="small" sx={{ color: '#d32f2f' }} />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                        </Box>
+                    )}
+                </TableCell>
+            </TableRow>
+        );
     };
 
     return (
@@ -75,50 +133,29 @@ export default function AllRoles() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {roles.map((role, index) => {
-                            const isOwnRole = currentUser?.roleId === role.id;
-                            return (
-                                <TableRow key={role.id}>
-                                    <TableCell>{index + 1}</TableCell>
-                                    <TableCell>
-                                        <Typography fontWeight="bold">{role.name}</Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {role.permissions?.map((p) => (
-                                                <Chip
-                                                    key={p}
-                                                    label={p}
-                                                    size="small"
-                                                    color="primary"
-                                                    variant="outlined"
-                                                />
-                                            ))}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                            <Tooltip title="Edit">
-                                                <IconButton size="small" onClick={() => navigate(`/dashboard/edit-role/${role.id}`)}>
-                                                    <EditIcon fontSize="small" sx={{ color: primaryColor }} />
-                                                </IconButton>
-                                            </Tooltip>
-                                            {!isOwnRole && (
-                                                <Tooltip title="Delete">
-                                                    <IconButton size="small" onClick={() => handleDelete(role.id)}>
-                                                        <DeleteIcon fontSize="small" sx={{ color: '#d32f2f' }} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
+                        {/* System Roles pehle */}
+                        {systemRoles.map((role, index) => (
+                            <RoleRow key={role.id} role={role} index={index} isSystem={true} />
+                        ))}
+
+                        {/* Custom Roles baad mein */}
+                        {customRoles.length > 0 && (
+                            <TableRow>
+                                <TableCell colSpan={4} sx={{ backgroundColor: '#f5f5f5', py: 0.5 }}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, pl: 1 }}>
+                                        CUSTOM ROLES
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        {customRoles.map((role, index) => (
+                            <RoleRow key={role.id} role={role} index={systemRoles.length + index} isSystem={false} />
+                        ))}
+
                         {!isLoading && roles.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} align="center">
-                                    <Typography color="text.secondary">No roles found. Add your first role.</Typography>
+                                    <Typography color="text.secondary">Koi role nahi mila.</Typography>
                                 </TableCell>
                             </TableRow>
                         )}

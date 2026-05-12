@@ -11,13 +11,14 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import jwt from 'jwtservice/jwtService';
 import { useNavigate } from 'react-router';
-import { THEME_COLOR_DARK } from 'utils/Constants';
+import useOrgTheme from 'utils/useOrgTheme';
 import SimpleButton from 'ui-component/SimpleButton';
 
 const FirebaseLogin = ({ setOpenModal, ...others }) => {
     const theme = useTheme();
     const scriptedRef = useScriptRef();
     const navigate = useNavigate();
+    const { primaryColor } = useOrgTheme();
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -47,24 +48,15 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                     const refreshToken = res.data.tokens.refresh.token;
                                     const user = res?.data?.user;
                                     const subdomain = res?.data?.subdomain;
+                                    const isHQ = res?.data?.isHQ || false;
+                                    const userWithHQ = { ...user, isHQ };
 
-                                    const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
-                                    const isMasterAdmin = user?.organizationId === MASTER_ORG_ID;
-
-                                    if (isMasterAdmin) {
-                                        // Master org superadmin — koi subdomain nahi, seedha dashboard
-                                        jwt.setToken(token);
-                                        jwt.setRefreshToken(refreshToken);
-                                        jwt.setUser({ ...user, time: Date.now() });
-                                        jwt.setIsLogin(true);
-                                        window.location.replace('/dashboard');
-                                    } else if (subdomain) {
-                                        // Org user — subdomain pe redirect karo via auth-redirect
-                                        const isLocal = window.location.hostname === 'localhost';
+                                    if (subdomain) {
+                                        const isLocal = window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost');
                                         const frontendBase = isLocal
                                             ? `http://${subdomain}.localhost:3000`
                                             : `https://${subdomain}.connectlodhran.com`;
-                                        const redirectUrl = `${frontendBase}/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`;
+                                        const redirectUrl = `${frontendBase}/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userWithHQ))}`;
                                         window.location.replace(redirectUrl);
                                     } else {
                                         setIsLoading(false);
@@ -150,7 +142,7 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                     width: '100%',
                                     textAlign: 'right',
                                     marginTop: '10px',
-                                    color: THEME_COLOR_DARK
+                                    color: primaryColor
                                 }}
                                 onClick={() => setOpenModal(true)}
                             >

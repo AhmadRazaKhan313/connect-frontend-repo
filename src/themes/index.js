@@ -42,7 +42,6 @@ export const theme = (customization, orgColors = {}) => {
         darkTextPrimary: color.grey700,
         darkTextSecondary: color.grey500,
         textDark: color.grey900,
-        // ✅ PRIMARY color sidebar active mein use ho — secondary nahi
         menuSelected: primaryColor,
         menuSelectedBack: hexToRgba(primaryColor, 0.10),
         divider: color.grey200,

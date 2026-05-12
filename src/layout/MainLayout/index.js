@@ -9,7 +9,7 @@ import { AppBar, Box, CssBaseline, Toolbar, useMediaQuery } from '@mui/material'
 import Breadcrumbs from 'ui-component/extended/Breadcrumbs';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import navigation from 'menu-items';
+import getMenuItems from 'menu-items';
 import { drawerWidth } from 'store/constant';
 import { SET_MENU } from 'store/actions';
 
@@ -97,7 +97,7 @@ const MainLayout = () => {
             {/* main content */}
             <Main theme={theme} open={leftDrawerOpened}>
                 {/* breadcrumb */}
-                <Breadcrumbs separator={IconChevronRight} navigation={navigation} icon title rightAlign />
+                <Breadcrumbs separator={IconChevronRight} navigation={getMenuItems()} icon title rightAlign />
                 <Outlet />
             </Main>
         </Box>

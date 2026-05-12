@@ -8,7 +8,7 @@ import { CirclePicker } from 'react-color';
 import { useParams, useNavigate } from 'react-router';
 import SimpleButton from 'ui-component/SimpleButton';
 
-import { AddISPValidationSchema } from '../../utils/ValidationSchemas';
+import { EditISPValidationSchema } from '../../utils/ValidationSchemas';
 
 function EditISP() {
     const theme = useTheme();
@@ -33,26 +33,18 @@ function EditISP() {
             });
     }, [id]);
 
-    const initialValues = {
-        name: isp?.name || '',
-        vlan: isp?.vlan || '',
-        openingBalance: isp?.openingBalance || '',
-        staticIpRate: isp?.staticIpRate || '',
-        color: isp?.color || ''
-    };
-
     const onSubmit = (values) => {
         setIsLoading(true);
         jwt.editIsp(id, values)
             .then(() => {
                 setIsLoading(false);
-                alert('Isp Edited');
+                alert('ISP updated successfully!');
                 navigate('/dashboard/all-isps');
             })
             .catch((err) => {
                 setIsLoading(false);
                 setIsError(true);
-                setErrorMssage(err?.response?.data?.message);
+                setErrorMssage(err?.response?.data?.message || 'Failed to update ISP');
             });
     };
 
@@ -60,9 +52,21 @@ function EditISP() {
 
     return (
         <>
-            <h3>Add ISP Details</h3>
+            <h3>Edit ISP Details</h3>
             {isError && <Alert severity="error">{errorMessage}</Alert>}
-            <Formik initialValues={initialValues} validationSchema={AddISPValidationSchema} onSubmit={onSubmit}>
+            <Formik
+                initialValues={{
+                    name: isp?.name || '',
+                    vlan: isp?.vlan || '',
+                    openingBalance: isp?.openingBalance || '',
+                    staticIpRate: isp?.staticIpRate || '',
+                    color: isp?.color || ''
+                }}
+                enableReinitialize
+                validationSchema={EditISPValidationSchema}
+                validateOnMount
+                onSubmit={onSubmit}
+            >
                 {({ values, errors, isValid, touched, handleChange, handleBlur, handleSubmit, setFieldValue }) => (
                     <form onSubmit={handleSubmit}>
                         <FormControl fullWidth sx={{ ...theme.typography.customInput }}>

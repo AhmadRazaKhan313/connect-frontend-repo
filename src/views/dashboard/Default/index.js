@@ -14,7 +14,7 @@ import PartnerGrandSummaryCard from './PartnerGrandSummaryCard';
 import { STAFF_TYPES } from 'utils/Constants';
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
- const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
+const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
 
 const MyDivider = () => {
     return (
@@ -44,14 +44,15 @@ const Dashboard = () => {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: currentYear - startYear + 1 }, (_, index) => startYear + index);
 
- 
+    // ✅ FIX: Check inside component so jwt.getUser() returns correct value at render time
+    const isMasterOrg = jwt.getUser()?.organizationId === MASTER_ORG_ID;
+    if (isMasterOrg) return <PlatformDashboard />;
 
     useEffect(() => {
-    if (jwt.getUser()?.organizationId === MASTER_ORG_ID) return;
-    if (selectedMonth && selectedYear) {
-        getSummary(selectedMonth, selectedYear);
-    }
-}, [selectedMonth, selectedYear]);
+        if (selectedMonth && selectedYear) {
+            getSummary(selectedMonth, selectedYear);
+        }
+    }, [selectedMonth, selectedYear]);
 
     const getSummary = (month, year) => {
         setLoading(true);
@@ -75,10 +76,6 @@ const Dashboard = () => {
             });
     };
 
-const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
-const isMasterOrg = jwt.getUser()?.organizationId === MASTER_ORG_ID;
-if (isMasterOrg) return <PlatformDashboard />;
-
     return (
         <Grid container spacing={gridSpacing}>
             <Grid item xs={12}>
@@ -101,7 +98,7 @@ if (isMasterOrg) return <PlatformDashboard />;
                                     <MenuItem value="7">July</MenuItem>
                                     <MenuItem value="8">August</MenuItem>
                                     <MenuItem value="9">September</MenuItem>
-                                    <MenuItem value="10">Ocotber</MenuItem>
+                                    <MenuItem value="10">October</MenuItem>
                                     <MenuItem value="11">November</MenuItem>
                                     <MenuItem value="12">December</MenuItem>
                                 </Select>

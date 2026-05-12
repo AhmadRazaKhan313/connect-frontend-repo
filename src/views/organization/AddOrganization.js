@@ -85,7 +85,6 @@ function AddOrganization() {
         subdomain:    '',
         primaryColor: '#4361ee',
         secondaryColor: '#424242',
-        secondaryColor: '#424242',
         features: {
             smsAlerts: true, invoicing: true, expenses: true,
             extraIncome: true, staffManagement: true,
@@ -105,13 +104,16 @@ function AddOrganization() {
         jwt.createOrganization(payload)
             .then(() => {
                 setIsLoading(false);
+                alert('Organization created successfully!');
                 resetForm();
                 navigate('/dashboard/all-organizations');
             })
             .catch((err) => {
                 setIsLoading(false);
                 setIsError(true);
-                setErrorMessage(err?.response?.data?.message || 'Something went wrong');
+                const msg = err?.response?.data?.message || 'Something went wrong. Please try again.';
+                setErrorMessage(msg);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
     };
 
@@ -158,14 +160,14 @@ function AddOrganization() {
                                     </FormHelperText>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} md={3}>
                                 <ColorPickerField
                                     label="Primary Color"
                                     value={values.primaryColor}
                                     onChange={(color) => setFieldValue('primaryColor', color)}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} md={3}>
                                 <ColorPickerField
                                     label="Secondary Color"
                                     value={values.secondaryColor}
