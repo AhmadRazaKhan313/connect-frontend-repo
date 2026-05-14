@@ -48,11 +48,11 @@ const PlatformDashboard = () => {
                 setIsLoading(false);
             });
 
-        // Load total users
-        jwt.getAllUsers()
+        // Load total users — silently fail (platformSuperAdmin may not have user.view)
+        jwt.getAllStaffs()
             .then((res) => {
-                const users = res?.data;
-                setTotalUsers(Array.isArray(users) ? users.length : users?.total || 0);
+                const staffs = res?.data;
+                setTotalUsers(Array.isArray(staffs) ? staffs.length : 0);
             })
             .catch(() => setTotalUsers(0));
     };

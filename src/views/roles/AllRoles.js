@@ -138,7 +138,7 @@ export default function AllRoles() {
                             <RoleRow key={role.id} role={role} index={index} isSystem={true} />
                         ))}
 
-                        {/* Custom Roles baad mein */}
+                       
                         {customRoles.length > 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} sx={{ backgroundColor: '#f5f5f5', py: 0.5 }}>
@@ -155,7 +155,7 @@ export default function AllRoles() {
                         {!isLoading && roles.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} align="center">
-                                    <Typography color="text.secondary">Koi role nahi mila.</Typography>
+                                    <Typography color="text.secondary">No role Found</Typography>
                                 </TableCell>
                             </TableRow>
                         )}

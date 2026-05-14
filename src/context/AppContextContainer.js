@@ -13,45 +13,56 @@ function AppContextContainer({ children }) {
     const [startDate, setStartDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
     const [endDate, setEndDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
 
-    const [orgColors, setOrgColors] = useState({
-        primaryColor: null,
-        secondaryColor: null
-    });
+    const [orgColors, setOrgColors] = useState({ primaryColor: null, secondaryColor: null });
+
+    // Bug fix: orgBranding missing tha — LogoSection ke liye
+    const [orgBranding, setOrgBranding] = useState({ logo: null, name: null });
 
     const location = useLocation();
     const navigate = useNavigate();
 
-    // ── Sync fresh user from DB ──────────────────────────────────────────────
-    // Fetches /auth/me on every route change + every 30s
-    // Ensures role changes take effect immediately without re-login
     const syncUserFromDB = useCallback(async () => {
-        const token = jwt.getAccessToken?.() || localStorage.getItem('accessToken');
-        if (!token) return; // not logged in
+        // Bug fix: getAccessToken() exist nahi — getToken() use karo
+        const token = jwt.getToken();
+        if (!token) return;
+
+        // Bug fix: reload cooldown — infinite loop risk khatam
+        const lastReload = parseInt(localStorage.getItem('_lastReload') || '0');
+        const now = Date.now();
 
         try {
             const res = await jwt.getMe();
             if (!res?.data?.user) return;
 
-            const { user, isHQ, subdomain } = res.data;
+            const { user, isHQ, subdomain, permissions } = res.data;
 
-            // Build fresh user object same as login
-            const freshUser = { ...user, isHQ: isHQ || false, subdomain };
+            const freshUser = {
+                ...user,
+                isHQ: isHQ || false,
+                subdomain,
+                ...(permissions !== null && permissions !== undefined
+                    ? { permissions }
+                    : {}),
+            };
 
-            // Get current stored user
             const currentUser = jwt.getUser();
+            const currentPerms = JSON.stringify(currentUser?.permissions ?? null);
+            const freshPerms   = JSON.stringify(freshUser?.permissions   ?? null);
 
-            // If role/type changed — update localStorage + force sidebar refresh
-            if (
-                currentUser?.role !== freshUser?.role ||
-                currentUser?.type !== freshUser?.type ||
-                currentUser?.roleId !== freshUser?.roleId
-            ) {
-                jwt.setUser(freshUser);
-                // Force full page reload to rebuild menu and clear stale state
+            jwt.setUser(freshUser);
+
+            const roleChanged =
+                currentUser?.role   !== freshUser?.role   ||
+                currentUser?.type   !== freshUser?.type   ||
+                currentUser?.roleId !== freshUser?.roleId ||
+                currentPerms        !== freshPerms;
+
+            // Sirf reload karo agar role change hua AND 10 second se zyada guzar gaye
+            if (roleChanged && (now - lastReload) > 10000) {
+                localStorage.setItem('_lastReload', String(now));
                 window.location.reload();
             }
         } catch (err) {
-            // 401 = token expired/invalid → redirect to login
             if (err?.response?.status === 401) {
                 jwt.logout?.();
                 navigate('/login');
@@ -59,50 +70,52 @@ function AppContextContainer({ children }) {
         }
     }, [navigate]);
 
-    // Sync on every route change
     useEffect(() => {
         syncUserFromDB();
     }, [location.pathname]);
 
-    // 30s interval hata diya — route change pe hi sync kaafi hai
-    // Interval se unnecessary reloads hote the
-
-    // ── Initial setup ────────────────────────────────────────────────────────
     useEffect(() => {
         getSmsBalance();
-        fetchOrgColors();
+        fetchOrgInfo(); // Bug fix: ek hi function — double API call khatam
     }, []);
 
-    const fetchOrgColors = async () => {
+    // Bug fix: fetchOrgColors + fetchOrgBranding merge — single API call
+    // Bug fix: early return hata diya — cache sirf instant render ke liye
+    const fetchOrgInfo = async () => {
         const user = jwt.getUser();
-        if (!user) return;
+        if (!user || user?.type === 'platformSuperAdmin') return;
         const orgId = user?.organizationId;
         if (!orgId) return;
-        if (user?.type === 'platformSuperAdmin') return;
 
-        const cached = localStorage.getItem('org_colors');
-        if (cached) {
-            try {
-                setOrgColors(JSON.parse(cached));
-                return;
-            } catch (_) {}
-        }
+        // Cache se instant render (flash avoid)
+        const cachedColors   = localStorage.getItem('org_colors');
+        const cachedBranding = localStorage.getItem('org_branding');
+        if (cachedColors)   { try { setOrgColors(JSON.parse(cachedColors));     } catch (_) {} }
+        if (cachedBranding) { try { setOrgBranding(JSON.parse(cachedBranding)); } catch (_) {} }
 
+        // API hamesha call hogi — early return NAHI
         try {
             const res = await jwt.getOrganization(orgId);
             const org = res?.data;
-            if (org?.primaryColor || org?.secondaryColor) {
-                const colors = {
-                    primaryColor: org.primaryColor || null,
-                    secondaryColor: org.secondaryColor || null
-                };
-                setOrgColors(colors);
-                localStorage.setItem('org_colors', JSON.stringify(colors));
-            }
+            if (!org) return;
+
+            const colors = {
+                primaryColor:   org.primaryColor   || null,
+                secondaryColor: org.secondaryColor || null,
+            };
+            setOrgColors(colors);
+            localStorage.setItem('org_colors', JSON.stringify(colors));
+
+            const branding = { logo: org.logo || null, name: org.name || null };
+            setOrgBranding(branding);
+            localStorage.setItem('org_branding', JSON.stringify(branding));
+
         } catch (err) {
-            console.log('Org colors fetch failed:', err?.message);
+            console.log('Org info fetch failed:', err?.message);
         }
     };
+
+    const fetchOrgColors = fetchOrgInfo; // backward compat alias
 
     const getSmsBalance = async () => {
         jwt.getSmsBalance()
@@ -119,6 +132,7 @@ function AppContextContainer({ children }) {
         startDate, setStartDate,
         endDate, setEndDate,
         orgColors, fetchOrgColors,
+        orgBranding, setOrgBranding, fetchOrgInfo,
         syncUserFromDB,
     };
 

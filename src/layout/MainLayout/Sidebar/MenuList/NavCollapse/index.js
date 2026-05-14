@@ -86,9 +86,9 @@ const NavCollapse = ({ menu, level }) => {
             <ListItemButton
                 sx={{
                     borderRadius: '8px',
-                    mb: 0.5,
+                    mb: 0.3,
                     alignItems: 'center',
-                    py: level > 1 ? 0.75 : 1,
+                    py: level > 1 ? 0.5 : 0.85,
                     pl: `${level > 1 ? level * 20 : 12}px`,
                     pr: '12px',
                     backgroundColor: isSelected ? `${primary}14` : 'transparent',

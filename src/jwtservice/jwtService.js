@@ -165,6 +165,11 @@ class JwtService {
     return axios.post(this.jwtConfig.loginEndpoint, args);
   }
 
+  // Fresh user + permissions fetch — AppContextContainer uses this on route change
+  getMe() {
+    return axios.get(this.jwtConfig.meEndpoint);
+  }
+
   updatePassword(args) {
     return axios.post(this.jwtConfig.updatePasswordEndpoint, args);
   }
@@ -432,6 +437,11 @@ class JwtService {
 
   deleteOrganization(id) {
     return axios.delete(`${this.jwtConfig.organizationEndpoint}/${id}`);
+  }
+
+  // Logo: base64 string as JSON — backend reads req.body.logo
+  uploadOrgLogo(id, base64Logo) {
+    return axios.patch(`${this.jwtConfig.organizationEndpoint}/${id}/logo`, { logo: base64Logo });
   }
   // ──── Role Methods ────────────────────────────────────────
   

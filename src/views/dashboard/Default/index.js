@@ -182,7 +182,7 @@ const Dashboard = () => {
                     </Grid>
                     <MyDivider />
                     <Grid container item spacing={2}>
-                        <Grid item sm={12} xs={12} md={12} lg={12}>
+                        <Grid item xs={12} md={6}>
                             <RemainingProfitCard
                                 color="green"
                                 isLoading={isLoading}
@@ -190,9 +190,7 @@ const Dashboard = () => {
                                 total={+totalIncome + +totalExtraIncome - companyExpense - partnersTotalExpense}
                             />
                         </Grid>
-                    </Grid>
-                    <Grid container item spacing={2}>
-                        <Grid item sm={12} xs={12} md={12} lg={12}>
+                        <Grid item xs={12} md={6}>
                             <RemainingProfitCard
                                 color="red"
                                 isLoading={isLoading}

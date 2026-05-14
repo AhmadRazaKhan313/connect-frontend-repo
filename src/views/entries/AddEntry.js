@@ -104,6 +104,7 @@ function AddEntry() {
                 setIsLoading(false);
                 setIsError(false);
                 setData(res?.data);
+                setAutoCompletedUsers([]);
                 setTimeout(() => {
                     setOpenModal(true);
                     resetForm();
@@ -160,17 +161,18 @@ function AddEntry() {
             });
     };
 
+    // FIX: Jab user dropdown se option select kare — sirf userId string store karo
     const onUserIdChange = (value, setFieldValue) => {
-        setFieldValue('userId', value);
+        setFieldValue('userId', value || '');
     };
 
-    const getAutoCompleteUsers = (value, setFieldValue) => {
-        const userId = value;
-        setFieldValue('userId', userId);
+    // FIX: Sirf search karo, setFieldValue mat chhuwo, aur empty string pe API call mat karo
+    const getAutoCompleteUsers = (value) => {
+        if (!value || value.trim() === '') return;
         setIsError(false);
-        jwt.getAutoCompleteUsers(userId)
+        jwt.getAutoCompleteUsers(value)
             .then((res) => {
-                setAutoCompletedUsers(res?.data);
+                setAutoCompletedUsers(res?.data || []);
             })
             .catch((err) => {
                 setErrorMessage(err?.response?.data?.message);
@@ -239,27 +241,31 @@ function AddEntry() {
                             <Grid item xs={12} sm={12} md={6} lg={6}>
                                 <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
                                     <InputLabel> User Id </InputLabel>
-                                    {/* <OutlinedInput
-                                        id="userId"
-                                        name="userId"
-                                        type="text"
-                                        value={values.userId}
-                                        onBlur={handleBlur}
-                                        // onChange={handleChange}
-                                        onChange={(e) => getAutoCompleteUsers(e, setFieldValue)}
-                                        label="User Id"
-                                        inputProps={{ min: 1 }}
-                                        sx={{ paddingTop: '5px' }}
-                                    /> */}
+                                    {/* FIX:
+                                        - value: autoCompletedUsers mein se match karo ya null
+                                        - onChange: selected string value Formik mein store karo
+                                        - onInputChange: sirf search API call karo, setFieldValue nahi
+                                        - getOptionLabel: options string array hai, directly return karo
+                                        - isOptionEqualToValue: dono string hain, direct compare karo
+                                    */}
                                     <Autocomplete
                                         id="userId"
                                         name="userId"
-                                        value={values.userId}
+                                        value={autoCompletedUsers.includes(values.userId) ? values.userId : null}
                                         onBlur={handleBlur}
                                         onChange={(_, value) => onUserIdChange(value, setFieldValue)}
-                                        onInputChange={(_, value) => getAutoCompleteUsers(value, setFieldValue)}
+                                        onInputChange={(_, value) => getAutoCompleteUsers(value)}
                                         options={autoCompletedUsers}
-                                        renderInput={(params) => <TextField {...params} sx={{ height: '70px' }} variant="outlined" />}
+                                        getOptionLabel={(option) => option || ''}
+                                        isOptionEqualToValue={(option, value) => option === value}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                sx={{ height: '70px' }}
+                                                variant="outlined"
+                                                placeholder="Search User ID..."
+                                            />
+                                        )}
                                     />
                                     {errors.userId && (
                                         <FormHelperText error id="standard-weight-helper-text-userId">

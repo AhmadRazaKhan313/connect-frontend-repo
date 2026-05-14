@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import SimpleButton from 'ui-component/SimpleButton';
 import { HexColorPicker } from 'react-colorful';
+import useAppContext from 'context/useAppContext';
 
 const FEATURE_LABELS = {
     smsAlerts:       'SMS Alerts',
@@ -17,49 +18,34 @@ const FEATURE_LABELS = {
     dashboard:       'Dashboard',
 };
 
-// Reusable color picker component
 const ColorPickerField = ({ label, value, onChange }) => {
     const [anchorEl, setAnchorEl] = useState(null);
-
-    const handleClick = (e) => setAnchorEl(e.currentTarget);
-    const handleClose = () => setAnchorEl(null);
     const open = Boolean(anchorEl);
-
     return (
         <Box>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>{label}</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {/* Color preview box — click to open picker */}
                 <Box
-                    onClick={handleClick}
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
                     sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 2,
-                        backgroundColor: value,
-                        border: '2px solid #e0e0e0',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        transition: 'transform 0.2s',
-                        '&:hover': { transform: 'scale(1.05)' }
+                        width: 48, height: 48, borderRadius: 2,
+                        backgroundColor: value, border: '2px solid #e0e0e0',
+                        cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                        transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.05)' }
                     }}
                 />
-                {/* Hex input */}
                 <OutlinedInput
-                    size="small"
-                    value={value}
+                    size="small" value={value}
                     onChange={(e) => onChange(e.target.value)}
                     sx={{ width: 140, fontFamily: 'monospace' }}
                     inputProps={{ maxLength: 7 }}
                 />
             </Box>
-
-            {/* Color picker popover */}
             <Popover
-                open={open}
-                anchorEl={anchorEl}
-                onClose={handleClose}
+                open={open} anchorEl={anchorEl}
+                onClose={() => setAnchorEl(null)}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                disableEnforceFocus disableAutoFocus
             >
                 <Paper sx={{ p: 2 }}>
                     <HexColorPicker color={value} onChange={onChange} />
@@ -76,17 +62,21 @@ function EditOrganization() {
     const theme = useTheme();
     const navigate = useNavigate();
     const { id } = useParams();
+    const { fetchOrgInfo } = useAppContext(); // sidebar refresh ke liye
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [isFetching, setIsFetching] = useState(true);
-    const [isError, setIsError] = useState(false);
+    const [isLoading, setIsLoading]       = useState(false);
+    const [isFetching, setIsFetching]     = useState(true);
+    const [isError, setIsError]           = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [initialValues, setInitialValues] = useState(null);
+    const [logoPreview, setLogoPreview]   = useState(null);
+    const [logoBase64, setLogoBase64]     = useState(null);
 
     useEffect(() => {
         jwt.getOrganization(id)
             .then((res) => {
                 const org = res?.data;
+                setLogoPreview(org.logo || null);
                 setInitialValues({
                     name:           org.name           || '',
                     email:          org.email          || '',
@@ -115,22 +105,55 @@ function EditOrganization() {
             });
     }, [id]);
 
-    const onSubmit = (values, { resetForm }) => {
+    const handleLogoChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Logo size should be less than 2MB');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setLogoBase64(reader.result);
+            setLogoPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const onSubmit = async (values, { resetForm }) => {
         setIsLoading(true);
+        setIsError(false);
         const { features, ...orgData } = values;
 
-        jwt.updateOrganization(id, orgData)
-            .then(() => jwt.updateOrganizationFeatures(id, features))
-            .then(() => {
-                setIsLoading(false);
-                alert('Organization Updated!');
-                navigate('/dashboard/all-organizations');
-            })
-            .catch((err) => {
-                setErrorMessage(err?.response?.data?.message || 'Update failed');
-                setIsError(true);
-                setIsLoading(false);
-            });
+        try {
+            // Step 1: org info update
+            await jwt.updateOrganization(id, orgData);
+
+            // Step 2: features update
+            await jwt.updateOrganizationFeatures(id, features);
+
+            // Step 3: logo upload — base64 as JSON body (backend reads req.body.logo)
+            // Bug fix: ab updateOrganization mein base64 nahi bhejte — dedicated endpoint use karo
+            if (logoBase64) {
+                await jwt.uploadOrgLogo(id, logoBase64);
+            }
+
+            // Bug fix: cache clear karo — warna sidebar mein purana logo/colors dikhega
+            localStorage.removeItem('org_branding');
+            localStorage.removeItem('org_colors');
+
+            // Sidebar mein fresh data fetch karo
+            await fetchOrgInfo();
+
+            setIsLoading(false);
+            alert('Organization Updated!');
+            navigate('/dashboard/all-organizations');
+
+        } catch (err) {
+            setErrorMessage(err?.response?.data?.message || 'Update failed');
+            setIsError(true);
+            setIsLoading(false);
+        }
     };
 
     if (isFetching) return <h3>Loading...</h3>;
@@ -145,7 +168,6 @@ function EditOrganization() {
                 {({ values, handleChange, handleBlur, handleSubmit, setFieldValue }) => (
                     <form onSubmit={handleSubmit}>
 
-                        {/* Organization Info */}
                         <h4>Organization Details</h4>
                         <Grid container spacing={2}>
                             <Grid item xs={12} md={6}>
@@ -172,26 +194,19 @@ function EditOrganization() {
                                     <OutlinedInput name="address" value={values.address} onChange={handleChange} onBlur={handleBlur} label="Address" />
                                 </FormControl>
                             </Grid>
-
-                            {/* Subdomain */}
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
                                     <InputLabel>Subdomain</InputLabel>
                                     <OutlinedInput
-                                        name="subdomain"
-                                        value={values.subdomain}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        label="Subdomain"
-                                        inputProps={{ pattern: '[a-z0-9-]+' }}
+                                        name="subdomain" value={values.subdomain}
+                                        onChange={handleChange} onBlur={handleBlur}
+                                        label="Subdomain" inputProps={{ pattern: '[a-z0-9-]+' }}
                                     />
                                     <FormHelperText>
-                                        Lowercase letters, numbers and hyphen only. Example: bahawalpur, multan-city
+                                        Lowercase letters, numbers and hyphen only. e.g. bahawalpur, multan-city
                                     </FormHelperText>
                                 </FormControl>
                             </Grid>
-
-                            {/* Status Toggle */}
                             <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', pl: 2 }}>
                                 <FormControlLabel
                                     control={
@@ -205,24 +220,47 @@ function EditOrganization() {
                                 />
                             </Grid>
 
-                            {/* Color Pickers */}
+                            {/* Logo Upload */}
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Organization Logo</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                                    {logoPreview && (
+                                        <Box
+                                            component="img" src={logoPreview} alt="Org Logo"
+                                            sx={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 2, border: '1px solid #e0e0e0', p: 0.5 }}
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                    )}
+                                    <Box>
+                                        <input accept="image/*" id="logo-upload" type="file" style={{ display: 'none' }} onChange={handleLogoChange} />
+                                        <label htmlFor="logo-upload">
+                                            <Box component="span" sx={{
+                                                display: 'inline-block', px: 2, py: 1,
+                                                border: '1px dashed #aaa', borderRadius: 2,
+                                                cursor: 'pointer', fontSize: '0.85rem', color: '#555',
+                                                '&:hover': { borderColor: '#4361ee', color: '#4361ee' }
+                                            }}>
+                                                {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                                            </Box>
+                                        </label>
+                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                                            PNG, JPG — max 2MB
+                                        </Typography>
+                                        {logoBase64 && (
+                                            <Typography variant="caption" color="success.main">✓ New logo ready to save</Typography>
+                                        )}
+                                    </Box>
+                                </Box>
+                            </Grid>
+
                             <Grid item xs={12} md={6}>
-                                <ColorPickerField
-                                    label="Primary Color"
-                                    value={values.primaryColor}
-                                    onChange={(color) => setFieldValue('primaryColor', color)}
-                                />
+                                <ColorPickerField label="Primary Color" value={values.primaryColor} onChange={(c) => setFieldValue('primaryColor', c)} />
                             </Grid>
                             <Grid item xs={12} md={6}>
-                                <ColorPickerField
-                                    label="Secondary Color"
-                                    value={values.secondaryColor}
-                                    onChange={(color) => setFieldValue('secondaryColor', color)}
-                                />
+                                <ColorPickerField label="Secondary Color" value={values.secondaryColor} onChange={(c) => setFieldValue('secondaryColor', c)} />
                             </Grid>
                         </Grid>
 
-                        {/* Feature Flags */}
                         <h4>Features</h4>
                         <Grid container spacing={1}>
                             {Object.keys(values.features).map((feature) => (

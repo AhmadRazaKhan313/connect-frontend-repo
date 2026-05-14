@@ -29,7 +29,7 @@ const NavItem = ({ item, level }) => {
             sx={{
                 width: isSelected ? 8 : 6,
                 height: isSelected ? 8 : 6,
-                color: isSelected ? '#fff' : 'text.secondary'
+                color: isSelected ? '#fff' : '#333'
             }}
             fontSize={level > 0 ? 'inherit' : 'medium'}
         />
@@ -67,9 +67,9 @@ const NavItem = ({ item, level }) => {
             disabled={item.disabled}
             sx={{
                 borderRadius: '8px',
-                mb: 0.5,
+                mb: 0.3,
                 alignItems: 'center',
-                py: level > 1 ? 0.75 : 1,
+                py: level > 1 ? 0.5 : 0.85,
                 pl: level > 1 ? `${level * 20}px` : '12px',
                 pr: '12px',
                 backgroundColor: isSelected ? `${primary} !important` : 'transparent',
@@ -97,8 +97,8 @@ const NavItem = ({ item, level }) => {
                     <Typography
                         variant="body2"
                         sx={{
-                            fontWeight: isSelected ? 600 : 400,
-                            color: isSelected ? '#fff' : 'inherit',
+                            fontWeight: isSelected ? 600 : 500,
+                            color: isSelected ? '#fff' : '#1a1a1a',
                             fontSize: '0.875rem'
                         }}
                     >

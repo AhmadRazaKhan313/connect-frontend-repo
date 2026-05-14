@@ -49,7 +49,16 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                     const user = res?.data?.user;
                                     const subdomain = res?.data?.subdomain;
                                     const isHQ = res?.data?.isHQ || false;
-                                    const userWithHQ = { ...user, isHQ };
+                                    // permissions: orgStaff ke liye array hai, baaki ke liye null
+                                    const permissions = res?.data?.permissions;
+                                    const userWithHQ = {
+                                        ...user,
+                                        isHQ,
+                                        // null nahi aaya toh save karo (orgStaff ke liye array hoga)
+                                        ...(permissions !== null && permissions !== undefined
+                                            ? { permissions }
+                                            : {}),
+                                    };
 
                                     if (subdomain) {
                                         const isLocal = window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost');

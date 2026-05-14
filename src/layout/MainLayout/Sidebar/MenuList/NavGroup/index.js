@@ -44,7 +44,7 @@ const NavGroup = ({ item }) => {
                 </Typography>
             )}
             <List disablePadding>{items}</List>
-            <Divider sx={{ mt: 0.5, mb: 1, borderColor: 'rgba(0,0,0,0.06)' }} />
+            <Divider sx={{ mt: 0.25, mb: 0.5, borderColor: 'rgba(0,0,0,0.06)' }} />
         </>
     );
 };

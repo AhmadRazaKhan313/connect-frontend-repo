@@ -1,5 +1,5 @@
 import { Grid, Typography } from '@mui/material';
-import Logo from '../../../assets/images/logo-white-navbar.svg';
+import Logo from '../../../assets/images/logo1.png';
 
 function Footer() {
     const style = {
@@ -16,7 +16,7 @@ function Footer() {
         <div style={{ backgroundColor: 'black', marginTop: '80px', height: 'auto' }}>
             <Grid container spacing={2} sx={{ mt: 2, pl: 10, pr: 10, pt: 5, pb: 10 }}>
                 <Grid item xs={12} sm={12} md={4} lg={4} xl={4}>
-                    <img src={Logo} alt="Logo" />
+                    <img src={Logo} alt="Logo" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
                     <Typography color="white" sx={{ mt: 2, width: '70%', lineHeight: '20px' }}>
                         Connect Lodhran delivers the best, fastest and most reliable internet service and iptv service at all time and you
                         can choose from wide range of available speeds.

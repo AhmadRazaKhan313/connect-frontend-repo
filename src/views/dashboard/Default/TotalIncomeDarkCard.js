@@ -17,6 +17,8 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     color: '#fff',
     overflow: 'hidden',
     position: 'relative',
+    height: '100%',          // parent Grid item controls height
+    boxSizing: 'border-box',
     '&:after': {
         content: '""',
         position: 'absolute',
@@ -25,7 +27,8 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
         background: 'rgba(255,255,255,0.12)',
         borderRadius: '50%',
         top: -30,
-        right: -180
+        right: -180,
+        pointerEvents: 'none',
     },
     '&:before': {
         content: '""',
@@ -35,12 +38,18 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
         background: 'rgba(255,255,255,0.08)',
         borderRadius: '50%',
         top: -160,
-        right: -130
-    }
+        right: -130,
+        pointerEvents: 'none',
+    },
 }));
 
 const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
     const theme = useTheme();
+
+    // words — max 1 line, ellipsis if too long
+    const words = total > 0
+        ? capitalize(numberToWords.toWords(total))
+        : 'Zero';
 
     return (
         <>
@@ -48,32 +57,75 @@ const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
                 <TotalIncomeCard />
             ) : (
                 <CardWrapper border={false} content={false}>
-                    <Box sx={{ p: 2 }}>
+                    <Box sx={{
+                        p: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        minHeight: 140,        // every card same min height
+                    }}>
                         <List sx={{ py: 0 }}>
-                            <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
-                                <ListItemAvatar>
+                            <ListItem alignItems="center" disableGutters sx={{ py: 0, alignItems: 'flex-start' }}>
+
+                                <ListItemAvatar sx={{ mt: 0.5 }}>
                                     <Avatar
                                         variant="rounded"
                                         sx={{
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.largeAvatar,
                                             backgroundColor: 'rgba(255,255,255,0.2) !important',
-                                            color: '#fff'
+                                            color: '#fff',
+                                            flexShrink: 0,
                                         }}
                                     >
                                         <TableChartOutlinedIcon fontSize="inherit" />
                                     </Avatar>
                                 </ListItemAvatar>
-                                <Box sx={{ py: 0, mt: 0.45, mb: 0.45 }}>
-                                    <Typography variant="h2" sx={{ color: '#fff' }}>
+
+                                <Box sx={{ minWidth: 0, flex: 1 }}>  {/* minWidth:0 enables truncation */}
+
+                                    {/* Amount */}
+                                    <Typography
+                                        variant="h2"
+                                        sx={{
+                                            color: '#fff',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                        }}
+                                    >
                                         Rs. {numeral(total).format('0,0')}
                                     </Typography>
-                                    <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.75)', mt: 1.5 }}>
-                                        {capitalize(numberToWords.toWords(total))}
+
+                                    {/* Words — single line, truncated */}
+                                    <Typography
+                                        variant="subtitle2"
+                                        sx={{
+                                            color: 'rgba(255,255,255,0.72)',
+                                            mt: 0.75,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            fontSize: '0.75rem',
+                                        }}
+                                        title={words}   // full text on hover
+                                    >
+                                        {words}
                                     </Typography>
-                                    <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.75)', mt: 0.5 }}>
+
+                                    {/* Title label */}
+                                    <Typography
+                                        variant="subtitle1"
+                                        sx={{
+                                            color: 'rgba(255,255,255,0.72)',
+                                            mt: 0.4,
+                                            fontWeight: 600,
+                                            fontSize: '0.8rem',
+                                        }}
+                                    >
                                         {title}
                                     </Typography>
+
                                 </Box>
                             </ListItem>
                         </List>
@@ -86,8 +138,8 @@ const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
 
 TotalIncomeDarkCard.propTypes = {
     isLoading: PropTypes.bool,
-    total: PropTypes.number,
-    title: PropTypes.string
+    total:     PropTypes.number,
+    title:     PropTypes.string,
 };
 
 export default TotalIncomeDarkCard;

@@ -12,8 +12,9 @@ const AuthRedirect = () => {
             try {
                 const user = JSON.parse(decodeURIComponent(userStr));
 
-                // Purane cached colors clear karo — naya login, naya org ho sakta hai
+               
                 localStorage.removeItem('org_colors');
+                localStorage.removeItem('org_branding');
 
                 jwt.setToken(token);
                 jwt.setRefreshToken(refreshToken);

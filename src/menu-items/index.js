@@ -10,12 +10,24 @@ import extraIncome from './extra-income';
 import organizations from './organizations';
 import roles from './roles';
 
-// ─── Menu Groups ────────────────────────────────────────────────────────────
+// ─── Permission → Menu mapping ───────────────────────────────────────────────
+// Kisi bhi ek permission hone par tab dikhao
+const MENU_PERMISSION_MAP = {
+    dashboard:   ['dashboard.view'],
+    isps:        ['isp.view',         'isp.create',         'isp.edit',     'isp.delete'],
+    users:       ['user.view',        'user.create',        'user.edit',    'user.delete'],
+    staff:       ['staff.view',       'staff.create',       'staff.edit',   'staff.delete'],
+    expenses:    ['expense.view',     'expense.create',     'expense.approve', 'expense.delete'],
+    entries:     ['entry.view',       'entry.create',       'entry.edit',   'entry.delete'],
+    invoices:    ['invoice.view',     'invoice.create',     'invoice.delete'],
+    extraIncome: ['extraIncome.view', 'extraIncome.create', 'extraIncome.edit', 'extraIncome.delete'],
+};
 
-// Platform Super Admin — sab kuch dekhta hai + organizations manage karta hai
+// ─── Menu Groups ─────────────────────────────────────────────────────────────
+
 const PLATFORM_SUPER_ADMIN_MENU = [
     dashboard,
-    organizations,   // orgs manage karna sirf platformSuperAdmin ka kaam
+    organizations,
     isps,
     staff,
     users,
@@ -26,7 +38,6 @@ const PLATFORM_SUPER_ADMIN_MENU = [
     roles,
 ];
 
-// Org Super Admin — apni org ka sab kuch, ISP add bhi, roles bhi
 const ORG_SUPER_ADMIN_MENU = [
     dashboard,
     isps,
@@ -39,7 +50,6 @@ const ORG_SUPER_ADMIN_MENU = [
     roles,
 ];
 
-// Org Admin — same as orgSuperAdmin lekin organizations nahi
 const ORG_ADMIN_MENU = [
     dashboard,
     isps,
@@ -52,27 +62,31 @@ const ORG_ADMIN_MENU = [
     roles,
 ];
 
-// Org Staff — sirf assigned permissions ke mutabiq
-const ORG_STAFF_MENU = [
-    dashboard,
-    isps,
-    users,
-    expenses,
-    entries,
-    invoices,
-    extraIncome,
-    // roles nahi — staff khud roles manage nahi karta
-];
+// ─── orgStaff ke liye permission-based dynamic menu ─────────────────────────
+const getOrgStaffMenu = (permissions = []) => {
+    // Helper: koi bhi ek permission match ho to true
+    const hasAny = (keys) => keys.some((k) => permissions.includes(k));
 
-// ─── Menu Selector ──────────────────────────────────────────────────────────
+    const menu = [];
 
+    if (hasAny(MENU_PERMISSION_MAP.dashboard))   menu.push(dashboard);
+    if (hasAny(MENU_PERMISSION_MAP.isps))        menu.push(isps);
+    if (hasAny(MENU_PERMISSION_MAP.users))       menu.push(users);
+    if (hasAny(MENU_PERMISSION_MAP.staff))       menu.push(staff);
+    if (hasAny(MENU_PERMISSION_MAP.expenses))    menu.push(expenses);
+    if (hasAny(MENU_PERMISSION_MAP.entries))     menu.push(entries);
+    if (hasAny(MENU_PERMISSION_MAP.invoices))    menu.push(invoices);
+    if (hasAny(MENU_PERMISSION_MAP.extraIncome)) menu.push(extraIncome);
+
+    return menu;
+};
+
+// ─── Menu Selector ───────────────────────────────────────────────────────────
 const getMenuItems = () => {
-    const user = jwt.getUser();
+    const user    = jwt.getUser();
     const userType = user?.type;
     const userRole = user?.role;
 
-    // platformSuperAdmin — STRICTLY type aur role — isHQ removed
-    // isHQ org ka flag hai, user ka nahi
     const isPlatformSuperAdmin =
         userType === 'platformSuperAdmin' ||
         userRole === 'platformSuperAdmin';
@@ -87,13 +101,14 @@ const getMenuItems = () => {
 
     if (
         userType === 'orgAdmin' || userRole === 'orgAdmin' ||
-        userType === 'admin' || userType === 'superadmin' // legacy support
+        userType === 'admin'   || userType === 'superadmin'
     ) {
         return { items: ORG_ADMIN_MENU };
     }
 
-    // orgStaff ya koi bhi aur
-    return { items: ORG_STAFF_MENU };
+    // orgStaff — permissions se menu banao
+    const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+    return { items: getOrgStaffMenu(permissions) };
 };
 
 export default getMenuItems;

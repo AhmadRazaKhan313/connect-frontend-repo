@@ -38,6 +38,7 @@ export default {
 
   // auth endpoints
   loginEndpoint: `${BASE_URL}/auth/login`,
+  meEndpoint:    `${BASE_URL}/auth/me`,
   refreshEndpoint: `${BASE_URL}/auth/refreshToken`,
   logoutEndpoint: `${BASE_URL}/auth/logout`,
   updatePasswordEndpoint: `${BASE_URL}/auth/update-password`,

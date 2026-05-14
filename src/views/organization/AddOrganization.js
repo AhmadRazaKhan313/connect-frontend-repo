@@ -1,12 +1,13 @@
 import {
-    Alert, Box, Checkbox, FormControl, FormControlLabel,
+    Alert, Box, Button, Checkbox, FormControl, FormControlLabel,
     FormHelperText, Grid, InputLabel, OutlinedInput, Paper,
     Popover, Typography
 } from '@mui/material';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useTheme } from '@mui/material/styles';
 import { Formik } from 'formik';
 import jwt from 'jwtservice/jwtService';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import SimpleButton from 'ui-component/SimpleButton';
 import { HexColorPicker } from 'react-colorful';
@@ -59,6 +60,68 @@ const ColorPickerField = ({ label, value, onChange }) => {
     );
 };
 
+// ── Logo picker component ────────────────────────────────────────────────────
+const LogoPickerField = ({ file, onFileChange }) => {
+    const inputRef = useRef(null);
+    const preview = file ? URL.createObjectURL(file) : null;
+
+    return (
+        <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                Organization Logo <Typography component="span" variant="caption" color="text.secondary">(optional)</Typography>
+            </Typography>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* Preview box */}
+                <Box
+                    onClick={() => inputRef.current?.click()}
+                    sx={{
+                        width: 80, height: 80, border: '2px dashed #c0c0c0',
+                        borderRadius: 2, display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', cursor: 'pointer', overflow: 'hidden',
+                        bgcolor: '#fafafa', transition: 'border-color 0.2s',
+                        '&:hover': { borderColor: '#4361ee' },
+                    }}
+                >
+                    {preview
+                        ? <img src={preview} alt="logo preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        : <UploadFileIcon sx={{ color: '#bdbdbd', fontSize: 32 }} />
+                    }
+                </Box>
+
+                <Box>
+                    <Button
+                        variant="outlined" size="small"
+                        onClick={() => inputRef.current?.click()}
+                        sx={{ mb: 0.5 }}
+                    >
+                        {file ? 'Change Logo' : 'Choose File'}
+                    </Button>
+                    {file && (
+                        <Typography variant="caption" display="block" color="text.secondary">
+                            {file.name}
+                        </Typography>
+                    )}
+                    <Typography variant="caption" display="block" color="text.secondary">
+                        PNG / JPG / SVG · max 5 MB
+                    </Typography>
+                </Box>
+            </Box>
+
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                    if (e.target.files?.[0]) onFileChange(e.target.files[0]);
+                }}
+            />
+        </Box>
+    );
+};
+
+// ── Validation ───────────────────────────────────────────────────────────────
 const validationSchema = Yup.object().shape({
     name:      Yup.string().required('Organization name is required'),
     email:     Yup.string().email('Invalid email').required('Email is required'),
@@ -72,12 +135,14 @@ const validationSchema = Yup.object().shape({
     })
 });
 
+// ── Main component ───────────────────────────────────────────────────────────
 function AddOrganization() {
     const theme = useTheme();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [logoFile, setLogoFile] = useState(null);
 
     const initialValues = {
         name:         '',
@@ -97,24 +162,50 @@ function AddOrganization() {
         }
     };
 
-    const onSubmit = (values, { resetForm }) => {
+    const onSubmit = async (values, { resetForm }) => {
         setIsLoading(true);
         setIsError(false);
-        const payload = { ...values, mobile: '00000000000', address: 'N/A' };
-        jwt.createOrganization(payload)
-            .then(() => {
-                setIsLoading(false);
-                alert('Organization created successfully!');
-                resetForm();
-                navigate('/dashboard/all-organizations');
-            })
-            .catch((err) => {
-                setIsLoading(false);
-                setIsError(true);
-                const msg = err?.response?.data?.message || 'Something went wrong. Please try again.';
-                setErrorMessage(msg);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+
+        try {
+            const payload = { ...values, mobile: '00000000000', address: 'N/A' };
+
+            // Step 1: create organization
+            const orgRes = await jwt.createOrganization(payload);
+            const orgId = orgRes?.data?.id || orgRes?.data?._id;
+
+            // Step 2: upload logo if selected (compressed to max 800px, quality 0.7)
+            if (logoFile && orgId) {
+                const base64Logo = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const objectUrl = URL.createObjectURL(logoFile);
+                    img.onload = () => {
+                        URL.revokeObjectURL(objectUrl);
+                        const MAX = 800;
+                        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+                        const canvas = document.createElement('canvas');
+                        canvas.width  = Math.round(img.width  * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/png', 0.8));
+                    };
+                    img.onerror = () => reject(new Error('Image load failed'));
+                    img.src = objectUrl;
+                });
+                await jwt.uploadOrgLogo(orgId, base64Logo);
+            }
+
+            setIsLoading(false);
+            alert('Organization created successfully!');
+            resetForm();
+            setLogoFile(null);
+            navigate('/dashboard/all-organizations');
+        } catch (err) {
+            setIsLoading(false);
+            setIsError(true);
+            const msg = err?.response?.data?.message || 'Something went wrong. Please try again.';
+            setErrorMessage(msg);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
     return (
@@ -160,6 +251,12 @@ function AddOrganization() {
                                     </FormHelperText>
                                 </FormControl>
                             </Grid>
+
+                            {/* Logo picker */}
+                            <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                                <LogoPickerField file={logoFile} onFileChange={setLogoFile} />
+                            </Grid>
+
                             <Grid item xs={12} md={3}>
                                 <ColorPickerField
                                     label="Primary Color"

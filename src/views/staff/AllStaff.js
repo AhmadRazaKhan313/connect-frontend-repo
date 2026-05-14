@@ -105,10 +105,26 @@ export default function AllStaff() {
             return;
         }
         setEditLoading(true);
-        const payload = { ...editStaff };
-        if (!payload.password) delete payload.password;
-        if (!payload.roleId) delete payload.roleId;
-        delete payload.id;
+        // Bug fix: pura row spread karne ki bajaye sirf specific allowed fields bhejo
+        // Isse accidental password overwrite ya immutable field errors nahi hote
+        const payload = {
+            fullname:  editStaff.fullname,
+            email:     editStaff.email,
+            mobile:    editStaff.mobile,
+            cnic:      editStaff.cnic,
+            address:   editStaff.address,
+            type:      editStaff.type,
+            role:      editStaff.role,
+            share:     editStaff.share,
+        };
+
+        // roleId: sirf tab bhejo jab valid value ho
+        if (editStaff.roleId) payload.roleId = editStaff.roleId;
+
+        // Password: sirf tab bhejo jab actually fill kiya ho
+        if (editStaff.password && editStaff.password.trim()) {
+            payload.password = editStaff.password;
+        }
 
         // Apna account edit kar rahe hain to role/type nahi bhejna
         if (editStaff.id === currentUserId) {
