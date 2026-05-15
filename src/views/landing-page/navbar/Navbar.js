@@ -9,7 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
-import Logo from '../../../assets/images/logo-white-navbar.svg';
+import Logo from '../../../assets/images/logo1.png';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import useOrgTheme from 'utils/useOrgTheme';
@@ -33,9 +33,10 @@ function Navbar({ pages, selectedMenu, setSelectedMenu }) {
             <Container maxWidth="xl">
                 <Toolbar disableGutters sx={{ maxHeight: '80px' }}>
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                        <img src={Logo} alt="Logo" />
+                        <img src={Logo} alt="Logo" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
                     </Box>
-                    <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+                    <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
+                        <img src={Logo} alt="Logo" style={{ height: '40px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
                         <IconButton
                             size="large"
                             aria-label="account of current user"

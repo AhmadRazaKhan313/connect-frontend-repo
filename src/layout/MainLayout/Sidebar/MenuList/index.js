@@ -1,16 +1,13 @@
 // material-ui
 import { Typography } from '@mui/material';
+
 // project imports
 import NavGroup from './NavGroup';
-import { getMenuItems } from 'menu-items';
-import useAppContext from 'context/useAppContext';
-
-// ==============================|| SIDEBAR MENU LIST ||============================== //
+import getMenuItems from 'menu-items';
 
 const MenuList = () => {
-    const { orgFeatures } = useAppContext();
-
-    const navItems = getMenuItems(orgFeatures).map((item) => {
+    const menuItem = getMenuItems(); 
+    const navItems = menuItem.items.map((item) => {
         switch (item.type) {
             case 'group':
                 return <NavGroup key={item.id} item={item} />;

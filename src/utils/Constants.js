@@ -16,7 +16,9 @@ export const PAYMENT_METHODS = [
 ];
 
 export const STAFF_TYPES = {
-    admin: 'superadmin',
+    platformSuperAdmin: 'platformSuperAdmin',
+    orgSuperAdmin: 'orgSuperAdmin',
+    admin: 'orgAdmin',
     partner: 'partner',
-    staff: 'staff'
+    staff: 'orgStaff'
 };

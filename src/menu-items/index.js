@@ -10,44 +10,105 @@ import extraIncome from './extra-income';
 import organizations from './organizations';
 import roles from './roles';
 
-const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
+// ─── Permission → Menu mapping ───────────────────────────────────────────────
+// Kisi bhi ek permission hone par tab dikhao
+const MENU_PERMISSION_MAP = {
+    dashboard:   ['dashboard.view'],
+    isps:        ['isp.view',         'isp.create',         'isp.edit',     'isp.delete'],
+    users:       ['user.view',        'user.create',        'user.edit',    'user.delete'],
+    staff:       ['staff.view',       'staff.create',       'staff.edit',   'staff.delete'],
+    expenses:    ['expense.view',     'expense.create',     'expense.approve', 'expense.delete'],
+    entries:     ['entry.view',       'entry.create',       'entry.edit',   'entry.delete'],
+    invoices:    ['invoice.view',     'invoice.create',     'invoice.delete'],
+    extraIncome: ['extraIncome.view', 'extraIncome.create', 'extraIncome.edit', 'extraIncome.delete'],
+};
 
-const PLATFORM_SUPER_ADMIN = [dashboard, organizations, roles, isps, staff, users, expenses, entries, invoices, extraIncome];
+// ─── Menu Groups ─────────────────────────────────────────────────────────────
 
-const getFilteredMenu = (type, role, orgFeatures) => {
-    const isAdmin = type === 'orgAdmin' || type === 'orgSuperAdmin' || role === 'orgSuperAdmin';
+const PLATFORM_SUPER_ADMIN_MENU = [
+    dashboard,
+    organizations,
+    isps,
+    staff,
+    users,
+    expenses,
+    entries,
+    invoices,
+    extraIncome,
+    roles,
+];
 
-    const menu = [dashboard];
+const ORG_SUPER_ADMIN_MENU = [
+    dashboard,
+    isps,
+    staff,
+    users,
+    expenses,
+    entries,
+    invoices,
+    extraIncome,
+    roles,
+];
 
-    // orgFeatures null ho toh sab show karo
-    if (!orgFeatures) {
-        if (isAdmin) return [dashboard, isps, staff, users, expenses, entries, invoices, extraIncome, roles];
-        return [dashboard, isps, users, entries];
-    }
+const ORG_ADMIN_MENU = [
+    dashboard,
+    isps,
+    staff,
+    users,
+    expenses,
+    entries,
+    invoices,
+    extraIncome,
+    roles,
+];
 
-    if (orgFeatures?.ispManagement) menu.push(isps);
-    if (isAdmin && orgFeatures?.staffManagement) menu.push(staff);
-    menu.push(users);
-    if (isAdmin && orgFeatures?.expenses) menu.push(expenses);
-    menu.push(entries);
-    if (isAdmin && orgFeatures?.invoicing) menu.push(invoices);
-    if (isAdmin && orgFeatures?.extraIncome) menu.push(extraIncome);
-    if (isAdmin) menu.push(roles);
+// ─── orgStaff ke liye permission-based dynamic menu ─────────────────────────
+const getOrgStaffMenu = (permissions = []) => {
+    // Helper: koi bhi ek permission match ho to true
+    const hasAny = (keys) => keys.some((k) => permissions.includes(k));
+
+    const menu = [];
+
+    if (hasAny(MENU_PERMISSION_MAP.dashboard))   menu.push(dashboard);
+    if (hasAny(MENU_PERMISSION_MAP.isps))        menu.push(isps);
+    if (hasAny(MENU_PERMISSION_MAP.users))       menu.push(users);
+    if (hasAny(MENU_PERMISSION_MAP.staff))       menu.push(staff);
+    if (hasAny(MENU_PERMISSION_MAP.expenses))    menu.push(expenses);
+    if (hasAny(MENU_PERMISSION_MAP.entries))     menu.push(entries);
+    if (hasAny(MENU_PERMISSION_MAP.invoices))    menu.push(invoices);
+    if (hasAny(MENU_PERMISSION_MAP.extraIncome)) menu.push(extraIncome);
 
     return menu;
 };
 
-export const getMenuItems = (orgFeatures) => {
-    const role = jwt.getUser()?.role;
-    const type = jwt.getUser()?.type;
-    const isSuperOrg = jwt.getUser()?.organizationId === MASTER_ORG_ID;
+// ─── Menu Selector ───────────────────────────────────────────────────────────
+const getMenuItems = () => {
+    const user    = jwt.getUser();
+    const userType = user?.type;
+    const userRole = user?.role;
 
-    if (isSuperOrg) {
-        return PLATFORM_SUPER_ADMIN;
+    const isPlatformSuperAdmin =
+        userType === 'platformSuperAdmin' ||
+        userRole === 'platformSuperAdmin';
+
+    if (isPlatformSuperAdmin) {
+        return { items: PLATFORM_SUPER_ADMIN_MENU };
     }
 
-    return getFilteredMenu(type, role, orgFeatures);
+    if (userType === 'orgSuperAdmin' || userRole === 'orgSuperAdmin') {
+        return { items: ORG_SUPER_ADMIN_MENU };
+    }
+
+    if (
+        userType === 'orgAdmin' || userRole === 'orgAdmin' ||
+        userType === 'admin'   || userType === 'superadmin'
+    ) {
+        return { items: ORG_ADMIN_MENU };
+    }
+
+    // orgStaff — permissions se menu banao
+    const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+    return { items: getOrgStaffMenu(permissions) };
 };
 
-const menuItems = { items: [] };
-export default menuItems;
+export default getMenuItems;

@@ -1,40 +1,38 @@
-// assets
-import { IconReceipt2 } from '@tabler/icons';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 
-// ==============================|| EXTRA ISP MENU ITEMS ||============================== //
+// 3 items (Send, All, Sent) — dropdown rahega
 
 const invoices = {
     id: 'invoices',
-    title: 'Manage Invoices',
-    // caption: 'Handle your invoices',
+    title: 'Invoices',
     type: 'group',
     children: [
         {
-            id: 'add',
-            title: 'Manage Invoices',
+            id: 'invoices-collapse',
+            title: 'Invoices',
             type: 'collapse',
-            icon: IconReceipt2,
+            icon: ReceiptIcon,
             children: [
                 {
-                    id: 'invoice',
-                    title: 'Send Invoice',
-                    type: 'item',
-                    url: '/dashboard/send-invoice',
-                    target: false
-                },
-                {
-                    id: 'invoice',
-                    title: 'Invoices',
+                    id: 'all-invoices',
+                    title: 'All Invoices',
                     type: 'item',
                     url: '/dashboard/all-invoices',
-                    target: false
+                    breadcrumbs: false
                 },
                 {
-                    id: 'invoice',
+                    id: 'sent-invoices',
                     title: 'Sent Invoices',
                     type: 'item',
                     url: '/dashboard/sent-invoices',
-                    target: false
+                    breadcrumbs: false
+                },
+                {
+                    id: 'send-invoice',
+                    title: 'Send Invoice',
+                    type: 'item',
+                    url: '/dashboard/send-invoice',
+                    breadcrumbs: false
                 }
             ]
         }

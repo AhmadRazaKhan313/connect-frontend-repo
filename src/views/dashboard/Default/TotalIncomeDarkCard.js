@@ -2,89 +2,130 @@ import PropTypes from 'prop-types';
 
 // material-ui
 import { styled, useTheme } from '@mui/material/styles';
-import { Avatar, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
+import { Avatar, Box, List, ListItem, ListItemAvatar, Typography } from '@mui/material';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
-
-// assets
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
-import { THEME_COLOR_DARK } from 'utils/Constants';
 import numeral from 'numeral';
 import numberToWords from 'number-to-words';
 import { capitalize } from 'utils/Functions';
 
-// styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    backgroundColor: `${theme.palette.primary.dark} !important`,
-    color: theme.palette.primary.light,
+    backgroundColor: `${theme.palette.primary.main} !important`,
+    color: '#fff',
     overflow: 'hidden',
     position: 'relative',
+    height: '100%',          // parent Grid item controls height
+    boxSizing: 'border-box',
     '&:after': {
         content: '""',
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(210.04deg, ${theme.palette.primary[200]} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
+        background: 'rgba(255,255,255,0.12)',
         borderRadius: '50%',
         top: -30,
-        right: -180
+        right: -180,
+        pointerEvents: 'none',
     },
     '&:before': {
         content: '""',
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(140.9deg, ${theme.palette.primary[200]} -14.02%, rgba(144, 202, 249, 0) 77.58%)`,
+        background: 'rgba(255,255,255,0.08)',
         borderRadius: '50%',
         top: -160,
-        right: -130
-    }
+        right: -130,
+        pointerEvents: 'none',
+    },
 }));
-
-// ==============================|| DASHBOARD - TOTAL INCOME DARK CARD ||============================== //
 
 const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
     const theme = useTheme();
+
+    // words — max 1 line, ellipsis if too long
+    const words = total > 0
+        ? capitalize(numberToWords.toWords(total))
+        : 'Zero';
+
     return (
         <>
             {isLoading ? (
                 <TotalIncomeCard />
             ) : (
                 <CardWrapper border={false} content={false}>
-                    <Box sx={{ p: 2 }}>
+                    <Box sx={{
+                        p: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        minHeight: 140,        // every card same min height
+                    }}>
                         <List sx={{ py: 0 }}>
-                            <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
-                                <ListItemAvatar>
+                            <ListItem alignItems="center" disableGutters sx={{ py: 0, alignItems: 'flex-start' }}>
+
+                                <ListItemAvatar sx={{ mt: 0.5 }}>
                                     <Avatar
                                         variant="rounded"
                                         sx={{
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.largeAvatar,
-                                            backgroundColor: `${theme.palette.primary[800]} !important`,
-                                            color: '#fff'
+                                            backgroundColor: 'rgba(255,255,255,0.2) !important',
+                                            color: '#fff',
+                                            flexShrink: 0,
                                         }}
                                     >
                                         <TableChartOutlinedIcon fontSize="inherit" />
                                     </Avatar>
                                 </ListItemAvatar>
-                                <Box
-                                    sx={{
-                                        py: 0,
-                                        mt: 0.45,
-                                        mb: 0.45
-                                    }}
-                                >
-                                    <Typography variant="h2" sx={{ color: '#fff' }}>
+
+                                <Box sx={{ minWidth: 0, flex: 1 }}>  {/* minWidth:0 enables truncation */}
+
+                                    {/* Amount */}
+                                    <Typography
+                                        variant="h2"
+                                        sx={{
+                                            color: '#fff',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                        }}
+                                    >
                                         Rs. {numeral(total).format('0,0')}
-                                    </Typography>{' '}
-                                    <Typography variant="subtitle1" sx={{ color: 'primary.light', mt: 1.5 }}>
-                                        {capitalize(numberToWords.toWords(total))}
                                     </Typography>
-                                    <Typography variant="subtitle1" sx={{ color: 'primary.light', mt: 1.5 }}>
+
+                                    {/* Words — single line, truncated */}
+                                    <Typography
+                                        variant="subtitle2"
+                                        sx={{
+                                            color: 'rgba(255,255,255,0.72)',
+                                            mt: 0.75,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            fontSize: '0.75rem',
+                                        }}
+                                        title={words}   // full text on hover
+                                    >
+                                        {words}
+                                    </Typography>
+
+                                    {/* Title label */}
+                                    <Typography
+                                        variant="subtitle1"
+                                        sx={{
+                                            color: 'rgba(255,255,255,0.72)',
+                                            mt: 0.4,
+                                            fontWeight: 600,
+                                            fontSize: '0.8rem',
+                                        }}
+                                    >
                                         {title}
                                     </Typography>
+
                                 </Box>
                             </ListItem>
                         </List>
@@ -96,7 +137,9 @@ const TotalIncomeDarkCard = ({ isLoading, total, title = 'Total Income' }) => {
 };
 
 TotalIncomeDarkCard.propTypes = {
-    isLoading: PropTypes.bool
+    isLoading: PropTypes.bool,
+    total:     PropTypes.number,
+    title:     PropTypes.string,
 };
 
 export default TotalIncomeDarkCard;

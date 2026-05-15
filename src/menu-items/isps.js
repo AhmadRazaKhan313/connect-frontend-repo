@@ -1,36 +1,47 @@
-// assets
-import { IconNetwork } from '@tabler/icons';
+import RouterIcon from '@mui/icons-material/Router';
 import jwt from 'jwtservice/jwtService';
-import { STAFF_TYPES } from 'utils/Constants';
 
-// ==============================|| EXTRA ISP MENU ITEMS ||============================== //
-let children = [];
-(jwt.getUser()?.type === 'orgAdmin' || jwt.getUser()?.type === 'orgSuperAdmin') &&
-    children.push({
-        id: 'add-isp',
-        title: 'Add ISP',
-        type: 'item',
-        url: '/dashboard/add-isp',
-        target: false
-    });
-children.push({
-    id: 'all-isps',
-    title: 'All ISPs',
-    type: 'item',
-    url: '/dashboard/all-isps',
-    target: false
-});
+const userType = jwt.getUser()?.type;
+const userRole = jwt.getUser()?.role;
+
+const canAddISP =
+    userType === 'platformSuperAdmin' ||
+    userRole === 'platformSuperAdmin' ||
+    userType === 'orgSuperAdmin' ||
+    userRole === 'orgSuperAdmin' ||
+    userType === 'orgAdmin' ||
+    userRole === 'orgAdmin';
+
 const isps = {
     id: 'isps',
     title: 'ISPs',
     type: 'group',
     children: [
         {
-            id: 'add',
-            title: 'Manage ISPs',
-            type: 'collapse',
-            icon: IconNetwork,
-            children
+            id: 'isps-collapse',
+            title: 'ISPs',
+            type: canAddISP ? 'collapse' : 'item',
+            icon: RouterIcon,
+            url: canAddISP ? undefined : '/dashboard/all-isps',
+            breadcrumbs: false,
+            ...(canAddISP && {
+                children: [
+                    {
+                        id: 'all-isps',
+                        title: 'All ISPs',
+                        type: 'item',
+                        url: '/dashboard/all-isps',
+                        breadcrumbs: false
+                    },
+                    {
+                        id: 'add-isp',
+                        title: 'Add ISP',
+                        type: 'item',
+                        url: '/dashboard/add-isp',
+                        breadcrumbs: false
+                    }
+                ]
+            })
         }
     ]
 };

@@ -1,140 +1,148 @@
-import PropTypes from "prop-types";
+import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
 
 // material-ui
-import { useTheme } from "@mui/material/styles";
-import {
-  Avatar,
-  Box,
-  Button,
-  ButtonBase,
-  Typography,
-} from "@mui/material";
+import { useTheme } from '@mui/material/styles';
+import { Avatar, Box, ButtonBase, Chip, Typography } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import SmsIcon from '@mui/icons-material/Sms';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 
 // project imports
-import LogoSection from "../LogoSection";
-import SearchSection from "./SearchSection";
-import ProfileSection from "./ProfileSection";
+import LogoSection from '../LogoSection';
+import SearchSection from './SearchSection';
+import ProfileSection from './ProfileSection';
+import CustomMessageModal from './CustomMessageModal';
 
-// assets
-import { IconMenu2 } from "@tabler/icons";
-import useAppContext from "context/useAppContext";
-import CustomMessageModal from "./CustomMessageModal";
-import { useState, useEffect } from "react";
-import jwt from "jwtservice/jwtService";
-import { toast } from "react-toastify";
+import useAppContext from 'context/useAppContext';
+import jwt from 'jwtservice/jwtService';
+import { STAFF_TYPES } from 'utils/Constants';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import useOrgTheme from "utils/useOrgTheme";
-
-// ==============================|| MAIN NAVBAR / HEADER ||============================== //
 
 const Header = ({ handleLeftDrawerToggle }) => {
-  const theme = useTheme();
-  const { primaryColor } = useOrgTheme();
+    const theme = useTheme();
+    const { filters, data, setFilteredData, smsBalance, getSmsBalance } = useAppContext();
 
-  const { filters, data, setFilteredData, smsBalance, getSmsBalance } =
-    useAppContext();
+    const [showModal, setShowModal] = useState(false);
+    const user = jwt.getUser();
+    const isSuperAdmin = user?.type === 'superadmin';
+    const isAdmin = user?.type === STAFF_TYPES.admin;
 
-  const [showModal, setShowModal] = useState(false);
-  const [smsSwitch, setSmsSwitch] = useState(true);
+    const sendExpiryAlert = () => {
+        jwt.sendExpiryAlert()
+            .then(() => {
+                toast.success('Expiry Alert Sent');
+                getSmsBalance();
+            })
+            .catch((err) => toast.error(err?.response?.data?.message || 'Error sending alert'));
+    };
 
-  useEffect(() => {
-    jwt
-      .getSmsSending()
-      .then((res) => {
-        setSmsSwitch(res?.data?.smsSending);
-      })
-      .catch((err) => {});
-  }, []);
+    return (
+        <>
+            {/* Logo + Menu Toggle */}
+            <Box
+                sx={{
+                    width: 228,
+                    display: 'flex',
+                    alignItems: 'center',
+                    [theme.breakpoints.down('md')]: { width: 'auto' }
+                }}
+            >
+                <Box component="span" sx={{ display: { xs: 'none', md: 'block' }, flexGrow: 1 }}>
+                    <LogoSection />
+                </Box>
+                <ButtonBase
+                    sx={{ borderRadius: '8px', overflow: 'hidden', ml: 0.5 }}
+                    onClick={handleLeftDrawerToggle}
+                >
+                    <Avatar
+                        variant="rounded"
+                        sx={{
+                            width: 34,
+                            height: 34,
+                            background: `${theme.palette.primary.main}15`,
+                            color: theme.palette.primary.main,
+                            borderRadius: '8px',
+                            '&:hover': {
+                                background: `${theme.palette.primary.main}25`
+                            }
+                        }}
+                    >
+                        <MenuIcon sx={{ fontSize: '1.2rem' }} />
+                    </Avatar>
+                </ButtonBase>
+            </Box>
 
-  const handleOpenModal = () => setShowModal(true);
-  const handleCloseModal = () => setShowModal(false);
+            {/* Search */}
+            <SearchSection filters={filters} data={data} setFilteredData={setFilteredData} />
 
-  const sendExpiryAlert = () => {
-    jwt
-      .sendExpiryAlert()
-      .then((res) => {
-        alert("Expiry Alert Sent");
-        getSmsBalance();
-      })
-      .catch((err) => toast.error(err));
-  };
+            <Box sx={{ flexGrow: 1 }} />
 
-  return (
-    <>
-      <Box
-        sx={{
-          width: 228,
-          display: "flex",
-          [theme.breakpoints.down("md")]: {
-            width: "auto",
-          },
-        }}
-      >
-        <Box
-          component="span"
-          sx={{ display: { xs: "none", md: "block" }, flexGrow: 1 }}
-        >
-          <LogoSection />
-        </Box>
-        <ButtonBase sx={{ borderRadius: "12px", overflow: "hidden" }}>
-          <Avatar
-            variant="rounded"
-            sx={{
-              ...theme.typography.commonAvatar,
-              ...theme.typography.mediumAvatar,
-              transition: "all .2s ease-in-out",
-              background: theme.palette.secondary.light,
-              color: theme.palette.secondary.dark,
-              "&:hover": {
-                background: theme.palette.secondary.dark,
-                color: theme.palette.secondary.light,
-              },
-            }}
-            onClick={handleLeftDrawerToggle}
-            color="inherit"
-          >
-            <IconMenu2 stroke={1.5} size="1.3rem" />
-          </Avatar>
-        </ButtonBase>
-      </Box>
+            {/* SMS Balance — only for admin/staff, not superadmin */}
+            {!isSuperAdmin && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, gap: 0.5 }}>
+                    <SmsIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+                    <Typography variant="body2" color="text.secondary">
+                        SMS:
+                    </Typography>
+                    <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, color: smsBalance < 100 ? 'error.main' : 'success.main' }}
+                    >
+                        {smsBalance}
+                    </Typography>
+                </Box>
+            )}
 
-      <SearchSection
-        filters={filters}
-        data={data}
-        setFilteredData={setFilteredData}
-      />
-      <Box sx={{ flexGrow: 1 }} />
-      <Box sx={{ flexGrow: 1 }} />
-      <div style={{ display: "flex" }}>
-        <Typography sx={{ mr: 0.5, color: primaryColor }}>
-          SMS Balance:{" "}
-        </Typography>
-        <Typography sx={{ mr: 1, color: smsBalance < 100 ? "red" : "green" }}>
-          {smsBalance}
-        </Typography>
-      </div>
-      <Button
-        variant="contained"
-        sx={{ mr: 2, color: "white", backgroundColor: primaryColor }}
-        onClick={handleOpenModal}
-      >
-        Send Message
-      </Button>
-      <Button
-        variant="contained"
-        sx={{ mr: 2, color: "white", backgroundColor: primaryColor }}
-        onClick={sendExpiryAlert}
-      >
-        Expiry Alert Message
-      </Button>
-      <ProfileSection />
-      <CustomMessageModal open={showModal} handleClose={handleCloseModal} />
-    </>
-  );
+            {/* Send Message — only for admin */}
+            {isAdmin && (
+                <>
+                    <Chip
+                        label="Send Message"
+                        onClick={() => setShowModal(true)}
+                        sx={{
+                            mr: 1.5,
+                            borderRadius: '8px',
+                            background: theme.palette.primary.main,
+                            color: '#fff',
+                            fontWeight: 500,
+                            fontSize: '0.8rem',
+                            height: '34px',
+                            cursor: 'pointer',
+                            '&:hover': { background: theme.palette.primary.dark, opacity: 0.9 }
+                        }}
+                    />
+                    <Chip
+                        label="Expiry Alert"
+                        onClick={sendExpiryAlert}
+                        sx={{
+                            mr: 1.5,
+                            borderRadius: '8px',
+                            background: `${theme.palette.primary.main}18`,
+                            color: theme.palette.primary.main,
+                            fontWeight: 500,
+                            fontSize: '0.8rem',
+                            height: '34px',
+                            cursor: 'pointer',
+                            border: `1px solid ${theme.palette.primary.main}40`,
+                            '&:hover': { background: `${theme.palette.primary.main}28` }
+                        }}
+                    />
+                </>
+            )}
+
+            {/* Profile */}
+            <ProfileSection />
+
+            {/* Custom Message Modal */}
+            <CustomMessageModal open={showModal} handleClose={() => setShowModal(false)} />
+        </>
+    );
 };
 
 Header.propTypes = {
-  handleLeftDrawerToggle: PropTypes.func,
+    handleLeftDrawerToggle: PropTypes.func
 };
 
 export default Header;

@@ -9,6 +9,7 @@ class JwtService {
   subscribers = [];
 
   constructor() {
+    // ── Request interceptor ───────────────────────────────────────────────────
     axios.interceptors.request.use(
       (config) => {
         const accessToken = this.getToken();
@@ -30,8 +31,69 @@ class JwtService {
         config.headers["Access-Control-Allow-Origin"] = "*";
         return config;
       },
+      (error) => Promise.reject(error)
+    );
+
+    // ── Response interceptor — auto refresh on 401 ────────────────────────────
+    axios.interceptors.response.use(
+      (response) => response,
       (error) => {
-        Promise.reject(error);
+        const { config: originalRequest, response } = error;
+
+        // Sirf 401 handle karo — refresh/logout loop avoid karo
+        if (
+          response?.status === 401 &&
+          !originalRequest._retry &&
+          !originalRequest.url?.includes(this.jwtConfig.refreshEndpoint) &&
+          !originalRequest.url?.includes(this.jwtConfig.logoutEndpoint) &&
+          !originalRequest.url?.includes(this.jwtConfig.loginEndpoint)
+        ) {
+          if (this.isAlreadyFetchingAccessToken) {
+            return new Promise((resolve) => {
+              this.addSubscriber((newToken) => {
+                originalRequest.headers.Authorization = `${this.jwtConfig.tokenType} ${newToken}`;
+                resolve(axios(originalRequest));
+              });
+            });
+          }
+
+          // Agar refresh token hi nahi hai tو loop mat karo
+          if (!this.getRefreshToken()) {
+            return Promise.reject(error);
+          }
+
+          originalRequest._retry = true;
+          this.isAlreadyFetchingAccessToken = true;
+
+          return axios
+            .post(this.jwtConfig.refreshEndpoint, {
+              refreshToken: this.getRefreshToken(),
+            })
+            .then((res) => {
+              const newAccessToken = res.data.tokens.access.token;
+              const newRefreshToken = res.data.tokens.refresh.token;
+
+              this.setToken(newAccessToken);
+              this.setRefreshToken(newRefreshToken);
+              this.isAlreadyFetchingAccessToken = false;
+              this.onAccessTokenFetched(newAccessToken);
+
+              originalRequest.headers.Authorization = `${this.jwtConfig.tokenType} ${newAccessToken}`;
+              return axios(originalRequest);
+            })
+            .catch(() => {
+              // Refresh bhi fail — logout karo
+              this.isAlreadyFetchingAccessToken = false;
+              this.removeToken();
+              this.removeRefreshtoken();
+              this.removeUser();
+              this.setIsLogin(false);
+              window.location.replace('/login');
+              return Promise.reject(error);
+            });
+        }
+
+        return Promise.reject(error);
       }
     );
   }
@@ -103,6 +165,11 @@ class JwtService {
     return axios.post(this.jwtConfig.loginEndpoint, args);
   }
 
+  // Fresh user + permissions fetch — AppContextContainer uses this on route change
+  getMe() {
+    return axios.get(this.jwtConfig.meEndpoint);
+  }
+
   updatePassword(args) {
     return axios.post(this.jwtConfig.updatePasswordEndpoint, args);
   }
@@ -156,7 +223,7 @@ class JwtService {
   }
 
   deletePackage(id) {
-    return axios.delete(`${this.jwtConfig.packageEndpoint}/${isp}`);
+    return axios.delete(`${this.jwtConfig.packageEndpoint}/${id}`);
   }
 
   createUser(payload) {
@@ -371,10 +438,19 @@ class JwtService {
   deleteOrganization(id) {
     return axios.delete(`${this.jwtConfig.organizationEndpoint}/${id}`);
   }
+
+  // Logo: base64 string as JSON — backend reads req.body.logo
+  uploadOrgLogo(id, base64Logo) {
+    return axios.patch(`${this.jwtConfig.organizationEndpoint}/${id}/logo`, { logo: base64Logo });
+  }
   // ──── Role Methods ────────────────────────────────────────
   
   getAllRoles() { 
     return axios.get(this.jwtConfig.roleEndpoint);
+  }
+  // Sirf custom DB roles — system roles nahi (staff assign dropdown ke liye)
+  getCustomRoles() {
+    return axios.get(`${this.jwtConfig.roleEndpoint}/custom-only`);
   }
   createRole(payload) { 
     return axios.post(this.jwtConfig.roleEndpoint, payload); 

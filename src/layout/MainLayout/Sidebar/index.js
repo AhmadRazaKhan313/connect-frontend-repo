@@ -13,15 +13,18 @@ import MenuList from './MenuList';
 import LogoSection from '../LogoSection';
 import { drawerWidth } from 'store/constant';
 
-// ==============================|| SIDEBAR DRAWER ||============================== //
-
 const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
     const theme = useTheme();
     const matchUpMd = useMediaQuery(theme.breakpoints.up('md'));
 
     const drawer = (
         <>
-            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+            <Box
+                sx={{
+                    display: { xs: 'block', md: 'none' },
+                    borderBottom: '1px solid rgba(0,0,0,0.06)'
+                }}
+            >
                 <Box sx={{ display: 'flex', p: 2, mx: 'auto' }}>
                     <LogoSection />
                 </Box>
@@ -30,16 +33,17 @@ const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
                 <PerfectScrollbar
                     component="div"
                     style={{
-                        height: !matchUpMd ? 'calc(100vh - 56px)' : 'calc(100vh - 88px)',
-                        paddingLeft: '16px',
-                        paddingRight: '16px'
+                        height: !matchUpMd ? 'calc(100vh - 56px)' : 'calc(100vh - 80px)',
+                        paddingLeft: '12px',
+                        paddingRight: '12px',
+                        paddingTop: '8px'
                     }}
                 >
                     <MenuList />
                 </PerfectScrollbar>
             </BrowserView>
             <MobileView>
-                <Box sx={{ px: 2 }}>
+                <Box sx={{ px: 1.5, pt: 1 }}>
                     <MenuList />
                 </Box>
             </MobileView>
@@ -49,7 +53,11 @@ const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
     const container = window !== undefined ? () => window.document.body : undefined;
 
     return (
-        <Box component="nav" sx={{ flexShrink: { md: 0 }, width: matchUpMd ? drawerWidth : 'auto' }} aria-label="mailbox folders">
+        <Box
+            component="nav"
+            sx={{ flexShrink: { md: 0 }, width: matchUpMd ? drawerWidth : 'auto' }}
+            aria-label="sidebar navigation"
+        >
             <Drawer
                 container={container}
                 variant={matchUpMd ? 'persistent' : 'temporary'}
@@ -59,11 +67,12 @@ const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
                 sx={{
                     '& .MuiDrawer-paper': {
                         width: drawerWidth,
-                        background: theme.palette.background.default,
+                        background: '#ffffff',
                         color: theme.palette.text.primary,
-                        borderRight: 'none',
+                        borderRight: '1px solid rgba(0,0,0,0.06)',
+                        boxShadow: 'none',
                         [theme.breakpoints.up('md')]: {
-                            top: '88px'
+                            top: '80px'
                         }
                     }
                 }}

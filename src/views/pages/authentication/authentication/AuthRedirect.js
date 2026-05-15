@@ -12,7 +12,10 @@ const AuthRedirect = () => {
             try {
                 const user = JSON.parse(decodeURIComponent(userStr));
 
-                // Is subdomain ki storage mein save karo
+               
+                localStorage.removeItem('org_colors');
+                localStorage.removeItem('org_branding');
+
                 jwt.setToken(token);
                 jwt.setRefreshToken(refreshToken);
                 jwt.setUser({ ...user, time: Date.now() });

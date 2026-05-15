@@ -1,39 +1,38 @@
-// assets
-import { IconCashBanknote } from '@tabler/icons';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 
-// ==============================|| EXTRA ISP MENU ITEMS ||============================== //
+// 3 items (Add, All, Pending) — dropdown rahega
 
 const expenses = {
     id: 'expenses',
-    title: 'Manage Expenses',
+    title: 'Expenses',
     type: 'group',
     children: [
         {
-            id: 'add',
-            title: 'Manage Expenses',
+            id: 'expenses-collapse',
+            title: 'Expenses',
             type: 'collapse',
-            icon: IconCashBanknote,
+            icon: AccountBalanceWalletIcon,
             children: [
                 {
-                    id: 'expenses',
-                    title: 'Add Expense',
-                    type: 'item',
-                    url: '/dashboard/add-expense',
-                    target: false
-                },
-                {
-                    id: 'expenses',
+                    id: 'all-expenses',
                     title: 'All Expenses',
                     type: 'item',
                     url: '/dashboard/all-expenses',
-                    target: false
+                    breadcrumbs: false
                 },
                 {
-                    id: 'expenses',
+                    id: 'pending-expenses',
                     title: 'Pending Expenses',
                     type: 'item',
                     url: '/dashboard/pending-expenses',
-                    target: false
+                    breadcrumbs: false
+                },
+                {
+                    id: 'add-expense',
+                    title: 'Add Expense',
+                    type: 'item',
+                    url: '/dashboard/add-expense',
+                    breadcrumbs: false
                 }
             ]
         }

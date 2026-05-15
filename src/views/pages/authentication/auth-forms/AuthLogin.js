@@ -6,19 +6,19 @@ import {
 } from '@mui/material';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
-import axios from 'axios';
 import useScriptRef from 'hooks/useScriptRef';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import jwt from 'jwtservice/jwtService';
 import { useNavigate } from 'react-router';
-import { THEME_COLOR_DARK } from 'utils/Constants';
+import useOrgTheme from 'utils/useOrgTheme';
 import SimpleButton from 'ui-component/SimpleButton';
 
 const FirebaseLogin = ({ setOpenModal, ...others }) => {
     const theme = useTheme();
     const scriptedRef = useScriptRef();
     const navigate = useNavigate();
+    const { primaryColor } = useOrgTheme();
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -47,36 +47,30 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                     const token = res.data.tokens.access.token;
                                     const refreshToken = res.data.tokens.refresh.token;
                                     const user = res?.data?.user;
-                                    const orgId = user?.organizationId;
+                                    const subdomain = res?.data?.subdomain;
+                                    const isHQ = res?.data?.isHQ || false;
+                                    // permissions: orgStaff ke liye array hai, baaki ke liye null
+                                    const permissions = res?.data?.permissions;
+                                    const userWithHQ = {
+                                        ...user,
+                                        isHQ,
+                                        // null nahi aaya toh save karo (orgStaff ke liye array hoga)
+                                        ...(permissions !== null && permissions !== undefined
+                                            ? { permissions }
+                                            : {}),
+                                    };
 
-                                    if (orgId) {
-                                        axios.get(`http://localhost:4000/api/v1/organization/${orgId}`, {
-                                            headers: { Authorization: `Bearer ${token}` }
-                                        })
-                                        .then((orgRes) => {
-                                            const subdomain = orgRes?.data?.subdomain;
-                                            if (subdomain) {
-                                                // localStorage.setItem('connect_last_subdomain', subdomain);
-                                                // localStorage.setItem('connect_isLogin', 'true');
-                                                
-
-                                                const redirectUrl = `http://${subdomain}.localhost:3000/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`;
-                                                window.location.replace(redirectUrl);
-                                            } else {
-                                                setIsLoading(false);
-                                                setIsError(true);
-                                                setErrorMessage('Subdomain not found');
-                                            }
-                                        })
-                                        .catch(() => {
-                                            setIsLoading(false);
-                                            setIsError(true);
-                                            setErrorMessage('Organization not found');
-                                        });
+                                    if (subdomain) {
+                                        const isLocal = window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost');
+                                        const frontendBase = isLocal
+                                            ? `http://${subdomain}.localhost:3000`
+                                            : `https://${subdomain}.connectlodhran.com`;
+                                        const redirectUrl = `${frontendBase}/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userWithHQ))}`;
+                                        window.location.replace(redirectUrl);
                                     } else {
                                         setIsLoading(false);
                                         setIsError(true);
-                                        setErrorMessage('No organization assigned');
+                                        setErrorMessage('No organization subdomain found. Please contact support.');
                                     }
                                 })
                                 .catch((err) => {
@@ -157,7 +151,7 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                     width: '100%',
                                     textAlign: 'right',
                                     marginTop: '10px',
-                                    color: THEME_COLOR_DARK
+                                    color: primaryColor
                                 }}
                                 onClick={() => setOpenModal(true)}
                             >

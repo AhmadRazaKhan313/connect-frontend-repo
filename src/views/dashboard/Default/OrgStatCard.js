@@ -1,9 +1,10 @@
 import PropTypes from 'prop-types';
 import { styled, useTheme } from '@mui/material/styles';
 import { Avatar, Box, List, ListItem, ListItemAvatar, Typography } from '@mui/material';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
+
 import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import useOrgTheme from 'utils/useOrgTheme';
 
 const CardWrapper = styled(MainCard, {
@@ -18,7 +19,7 @@ const CardWrapper = styled(MainCard, {
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(210.04deg, rgba(255,255,255,0.2) -50.94%, rgba(255,255,255,0) 83.49%)`,
+        background: 'rgba(255,255,255,0.12)',
         borderRadius: '50%',
         top: -30,
         right: -180
@@ -28,7 +29,7 @@ const CardWrapper = styled(MainCard, {
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(140.9deg, rgba(255,255,255,0.15) -14.02%, rgba(255,255,255,0) 77.58%)`,
+        background: 'rgba(255,255,255,0.08)',
         borderRadius: '50%',
         top: -160,
         right: -130
