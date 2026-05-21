@@ -1,8 +1,9 @@
 import jwt from 'jwtservice/jwtService';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppContextProvider } from './AppContext';
 import { useLocation, useNavigate } from 'react-router';
 import moment from 'moment';
+import storage from 'utils/storage';
 
 function AppContextContainer({ children }) {
     const [data, setData] = useState([]);
@@ -12,22 +13,24 @@ function AppContextContainer({ children }) {
     const [ispSelected, setIspSelected] = useState('');
     const [startDate, setStartDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
     const [endDate, setEndDate] = useState(moment(new Date()).format('YYYY-MM-DD'));
-
     const [orgColors, setOrgColors] = useState({ primaryColor: null, secondaryColor: null });
-
-    // Bug fix: orgBranding missing tha — LogoSection ke liye
     const [orgBranding, setOrgBranding] = useState({ logo: null, name: null });
 
     const location = useLocation();
     const navigate = useNavigate();
 
+    // In-flight guard — concurrent calls prevent karta hai
+    const isSyncing = useRef(false);
+
     const syncUserFromDB = useCallback(async () => {
-        // Bug fix: getAccessToken() exist nahi — getToken() use karo
+        if (isSyncing.current) return;
+
         const token = jwt.getToken();
         if (!token) return;
 
-        // Bug fix: reload cooldown — infinite loop risk khatam
-        const lastReload = parseInt(localStorage.getItem('_lastReload') || '0');
+        isSyncing.current = true;
+
+        const lastReload = storage.getInt('_lastReload');
         const now = Date.now();
 
         try {
@@ -57,9 +60,8 @@ function AppContextContainer({ children }) {
                 currentUser?.roleId !== freshUser?.roleId ||
                 currentPerms        !== freshPerms;
 
-            // Sirf reload karo agar role change hua AND 10 second se zyada guzar gaye
             if (roleChanged && (now - lastReload) > 10000) {
-                localStorage.setItem('_lastReload', String(now));
+                storage.set('_lastReload', String(now));
                 window.location.reload();
             }
         } catch (err) {
@@ -67,20 +69,21 @@ function AppContextContainer({ children }) {
                 jwt.logout?.();
                 navigate('/login');
             }
+        } finally {
+            isSyncing.current = false;
         }
     }, [navigate]);
 
     useEffect(() => {
         syncUserFromDB();
-    }, [location.pathname]);
+    }, [location.pathname, syncUserFromDB]);
 
     useEffect(() => {
         getSmsBalance();
-        fetchOrgInfo(); // Bug fix: ek hi function — double API call khatam
+        fetchOrgInfo();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Bug fix: fetchOrgColors + fetchOrgBranding merge — single API call
-    // Bug fix: early return hata diya — cache sirf instant render ke liye
     const fetchOrgInfo = async () => {
         const user = jwt.getUser();
         if (!user || user?.type === 'platformSuperAdmin') return;
@@ -88,12 +91,11 @@ function AppContextContainer({ children }) {
         if (!orgId) return;
 
         // Cache se instant render (flash avoid)
-        const cachedColors   = localStorage.getItem('org_colors');
-        const cachedBranding = localStorage.getItem('org_branding');
-        if (cachedColors)   { try { setOrgColors(JSON.parse(cachedColors));     } catch (_) {} }
-        if (cachedBranding) { try { setOrgBranding(JSON.parse(cachedBranding)); } catch (_) {} }
+        const cachedColors   = storage.getJSON('org_colors');
+        const cachedBranding = storage.getJSON('org_branding');
+        if (cachedColors)   setOrgColors(cachedColors);
+        if (cachedBranding) setOrgBranding(cachedBranding);
 
-        // API hamesha call hogi — early return NAHI
         try {
             const res = await jwt.getOrganization(orgId);
             const org = res?.data;
@@ -104,11 +106,11 @@ function AppContextContainer({ children }) {
                 secondaryColor: org.secondaryColor || null,
             };
             setOrgColors(colors);
-            localStorage.setItem('org_colors', JSON.stringify(colors));
+            storage.setJSON('org_colors', colors);
 
             const branding = { logo: org.logo || null, name: org.name || null };
             setOrgBranding(branding);
-            localStorage.setItem('org_branding', JSON.stringify(branding));
+            storage.setJSON('org_branding', branding);
 
         } catch (err) {
             console.log('Org info fetch failed:', err?.message);

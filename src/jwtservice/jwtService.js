@@ -9,7 +9,6 @@ class JwtService {
   subscribers = [];
 
   constructor() {
-    // ── Request interceptor ───────────────────────────────────────────────────
     axios.interceptors.request.use(
       (config) => {
         const accessToken = this.getToken();
