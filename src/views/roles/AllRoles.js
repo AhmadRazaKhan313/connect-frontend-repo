@@ -87,11 +87,21 @@ export default function AllRoles() {
                         <Typography variant="caption" color="text.secondary">—</Typography>
                     ) : (
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <Tooltip title="Edit">
-                                <IconButton size="small" onClick={() => navigate(`/dashboard/edit-role/${role.id}`)}>
-                                    <EditIcon fontSize="small" sx={{ color: primaryColor }} />
-                                </IconButton>
-                            </Tooltip>
+                            {isOwnRole ? (
+                                <Tooltip title="You cannot edit the permissions of your own role (prevents accidental self-lockout). Ask another admin, or assign yourself a different role first.">
+                                    <span>
+                                        <IconButton size="small" disabled>
+                                            <EditIcon fontSize="small" sx={{ color: '#ccc' }} />
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
+                            ) : (
+                                <Tooltip title="Edit">
+                                    <IconButton size="small" onClick={() => navigate(`/dashboard/edit-role/${role.id}`)}>
+                                        <EditIcon fontSize="small" sx={{ color: primaryColor }} />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
                             {!isOwnRole && (
                                 <Tooltip title="Delete">
                                     <IconButton size="small" onClick={() => handleDelete(role.id)}>
