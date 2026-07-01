@@ -78,7 +78,7 @@ export default {
   // organization endpoint
   organizationEndpoint: `${BASE_URL}/organization`,
 
- //role endpoint
+  // role endpoint
   roleEndpoint: `${BASE_URL}/role`,
-  
+
 };

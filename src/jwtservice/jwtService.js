@@ -442,28 +442,32 @@ class JwtService {
   uploadOrgLogo(id, base64Logo) {
     return axios.patch(`${this.jwtConfig.organizationEndpoint}/${id}/logo`, { logo: base64Logo });
   }
-  // ──── Role Methods ────────────────────────────────────────
-  
-  getAllRoles() { 
+
+  // The requesting user's own organization (branding/context).
+  getMyOrganization() {
+    return axios.get(`${this.jwtConfig.organizationEndpoint}/me`);
+  }
+
+  // ── Roles (custom per-organization roles) ──
+  getAllRoles() {
     return axios.get(this.jwtConfig.roleEndpoint);
   }
-  // Sirf custom DB roles — system roles nahi (staff assign dropdown ke liye)
+  // Roles for the current org, for staff-form dropdowns.
   getCustomRoles() {
-    return axios.get(`${this.jwtConfig.roleEndpoint}/custom-only`);
+    return axios.get(`${this.jwtConfig.roleEndpoint}/assignable`);
   }
-  createRole(payload) { 
-    return axios.post(this.jwtConfig.roleEndpoint, payload); 
+  getRoleById(id) {
+    return axios.get(`${this.jwtConfig.roleEndpoint}/${id}`);
   }
-  deleteRole(id) { 
-    return axios.delete(`${this.jwtConfig.roleEndpoint}/${id}`); 
+  createRole(payload) {
+    return axios.post(this.jwtConfig.roleEndpoint, payload);
   }
-  getRoleById(id) { 
-    return axios.get(`${this.jwtConfig.roleEndpoint}/${id}`); 
+  updateRole(id, payload) {
+    return axios.put(`${this.jwtConfig.roleEndpoint}/${id}`, payload);
   }
-  updateRole(id, payload) { 
-    return axios.put(`${this.jwtConfig.roleEndpoint}/${id}`, payload); 
+  deleteRole(id) {
+    return axios.delete(`${this.jwtConfig.roleEndpoint}/${id}`);
   }
-  
 
 }
 
