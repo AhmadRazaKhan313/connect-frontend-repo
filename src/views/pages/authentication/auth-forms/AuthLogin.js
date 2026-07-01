@@ -48,13 +48,12 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                     const refreshToken = res.data.tokens.refresh.token;
                                     const user = res?.data?.user;
                                     const subdomain = res?.data?.subdomain;
-                                    const isHQ = res?.data?.isHQ || false;
-                                    // permissions: orgStaff ke liye array hai, baaki ke liye null
+                                    const isPlatform = res?.data?.isPlatform || false;
+                                    // Effective permissions for UI gating (SUPER_ADMIN gets the full set).
                                     const permissions = res?.data?.permissions;
-                                    const userWithHQ = {
+                                    const storedUser = {
                                         ...user,
-                                        isHQ,
-                                        // null nahi aaya toh save karo (orgStaff ke liye array hoga)
+                                        isPlatform,
                                         ...(permissions !== null && permissions !== undefined
                                             ? { permissions }
                                             : {}),
@@ -65,7 +64,7 @@ const FirebaseLogin = ({ setOpenModal, ...others }) => {
                                         const frontendBase = isLocal
                                             ? `http://${subdomain}.localhost:3000`
                                             : `https://${subdomain}.connectlodhran.com`;
-                                        const redirectUrl = `${frontendBase}/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userWithHQ))}`;
+                                        const redirectUrl = `${frontendBase}/auth-redirect?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(storedUser))}`;
                                         window.location.replace(redirectUrl);
                                     } else {
                                         setIsLoading(false);

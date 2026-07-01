@@ -37,11 +37,11 @@ function AppContextContainer({ children }) {
             const res = await jwt.getMe();
             if (!res?.data?.user) return;
 
-            const { user, isHQ, subdomain, permissions } = res.data;
+            const { user, isPlatform, subdomain, permissions } = res.data;
 
             const freshUser = {
                 ...user,
-                isHQ: isHQ || false,
+                isPlatform: isPlatform || false,
                 subdomain,
                 ...(permissions !== null && permissions !== undefined
                     ? { permissions }
@@ -55,10 +55,8 @@ function AppContextContainer({ children }) {
             jwt.setUser(freshUser);
 
             const roleChanged =
-                currentUser?.role   !== freshUser?.role   ||
-                currentUser?.type   !== freshUser?.type   ||
                 currentUser?.roleId !== freshUser?.roleId ||
-                currentPerms        !== freshPerms;
+                currentPerms      !== freshPerms;
 
             if (roleChanged && (now - lastReload) > 10000) {
                 storage.set('_lastReload', String(now));
@@ -86,7 +84,7 @@ function AppContextContainer({ children }) {
 
     const fetchOrgInfo = async () => {
         const user = jwt.getUser();
-        if (!user || user?.type === 'platformSuperAdmin') return;
+        if (!user || user?.isPlatform === true) return;
         const orgId = user?.organizationId;
         if (!orgId) return;
 
