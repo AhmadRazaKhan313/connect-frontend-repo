@@ -30,8 +30,12 @@ export default function EditRole() {
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [initialValues, setInitialValues] = useState(null);
+    const [isOwnRole, setIsOwnRole] = useState(false);
 
     useEffect(() => {
+        const currentUser = jwt.getUser();
+        setIsOwnRole(currentUser?.roleId === id);
+
         jwt.getRoleById(id)
             .then((res) => {
                 const role = res.data?.data || res.data;
@@ -71,6 +75,13 @@ export default function EditRole() {
             <Typography variant="h3" sx={{ mb: 3 }}>Edit Role</Typography>
 
             {isError && <Alert severity="error" sx={{ mb: 2 }}>{errorMessage}</Alert>}
+            {isOwnRole && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    This is your own currently-assigned role. To prevent accidentally locking yourself
+                    out, you cannot edit its permissions here. Ask another admin to make changes, or
+                    assign yourself a different role first.
+                </Alert>
+            )}
 
             <Formik
                 initialValues={initialValues}
@@ -105,6 +116,7 @@ export default function EditRole() {
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 label="Role Name"
+                                disabled={isOwnRole}
                             />
                             {touched.name && errors.name && (
                                 <FormHelperText error>{errors.name}</FormHelperText>
@@ -137,6 +149,7 @@ export default function EditRole() {
                                                     checked={allSelected}
                                                     indeterminate={someSelected && !allSelected}
                                                     onChange={(e) => handleGroupSelectAll(group, e.target.checked, setFieldValue, values)}
+                                                    disabled={isOwnRole}
                                                     sx={{ color: primaryColor, '&.Mui-checked': { color: primaryColor } }}
                                                 />
                                                 <Typography fontWeight="bold" variant="subtitle1">
@@ -159,6 +172,7 @@ export default function EditRole() {
                                                                     setFieldValue('permissions', values.permissions.filter((p) => p !== perm.key));
                                                                 }
                                                             }}
+                                                            disabled={isOwnRole}
                                                             sx={{ color: primaryColor, '&.Mui-checked': { color: primaryColor } }}
                                                         />
                                                     }
@@ -175,8 +189,8 @@ export default function EditRole() {
                         {/* Buttons */}
                         <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
                             <SimpleButton
-                                isValid={!isValid || isLoading}
-                                title="Update Role"
+                                isValid={!isValid || isLoading || isOwnRole}
+                                title={isOwnRole ? 'View Only (Own Role)' : 'Update Role'}
                             />
                             <Button
                                 variant="outlined"
