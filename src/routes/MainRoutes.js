@@ -6,6 +6,9 @@ import { Navigate } from 'react-router';
 const AddOrganization      = Loadable(lazy(() => import('views/organization/AddOrganization')));
 const AllOrganizations     = Loadable(lazy(() => import('views/organization/AllOrganizations')));
 const EditOrganization     = Loadable(lazy(() => import('views/organization/EditOrganization')));
+const AllRoles             = Loadable(lazy(() => import('views/roles/AllRoles')));
+const AddRole              = Loadable(lazy(() => import('views/roles/AddRole')));
+const EditRole             = Loadable(lazy(() => import('views/roles/EditRole')));
 const MainLayout           = Loadable(lazy(() => import('layout/MainLayout')));
 const DashboardDefault     = Loadable(lazy(() => import('views/dashboard/Default')));
 const AddISP               = Loadable(lazy(() => import('views/isps/AddISP')));
@@ -37,9 +40,6 @@ const CompletedExtraIncomes= Loadable(lazy(() => import('views/extra-income/Comp
 const PendingExtraIncomes  = Loadable(lazy(() => import('views/extra-income/PendingExtraIncomes')));
 const EditExtraIncome      = Loadable(lazy(() => import('views/extra-income/EditExtraIncome')));
 const NotFound             = Loadable(lazy(() => import('views/error/NotFound')));
-const AllRoles             = Loadable(lazy(() => import('views/roles/AllRoles')));
-const AddRole              = Loadable(lazy(() => import('views/roles/AddRole')));
-const EditRole             = Loadable(lazy(() => import('views/roles/EditRole')));
 const Forbidden            = Loadable(lazy(() => import('views/error/Forbidden')));
 
 // ─── Guards ──────────────────────────────────────────────────────────────────
@@ -50,15 +50,13 @@ const checkLogin = (element) => {
     return element;
 };
 
-// Helper: STRICTLY type aur role check — isHQ intentionally removed
-// isHQ = org ka flag hai, user ka nahi — orgAdmin bhi HQ org mein ho sakta hai
-const isPlatformSA = () => {
-    const user = jwt.getUser();
-    return (
-        user?.type === 'platformSuperAdmin' ||
-        user?.role === 'platformSuperAdmin'
-    );
+// Helper: the single Platform Super Admin (system role).
+// Helper: can this account manage organizations (has organization.* permission)?
+const canManageOrgs = () => {
+    const p = jwt.getUser()?.permissions;
+    return Array.isArray(p) && p.some((x) => x && x.startsWith('organization.'));
 };
+const isPlatformSA = () => canManageOrgs();
 
 // Organization guard: sirf platformSuperAdmin — baaki sab /forbidden
 const checkPlatformSA = (element) => {
@@ -121,7 +119,7 @@ const MainRoutes = {
         { path: '/dashboard/pending-extra-incomes',     element: checkLogin(<PendingExtraIncomes />) },
         { path: '/dashboard/edit-extra-income',         element: checkLogin(<EditExtraIncome />) },
 
-        // ── Roles ────────────────────────────────────────────────────────────
+        // ── Roles & Permissions (gated by role.* on the backend) ─────────────
         { path: '/dashboard/all-roles',                 element: checkLogin(<AllRoles />) },
         { path: '/dashboard/add-role',                  element: checkLogin(<AddRole />) },
         { path: '/dashboard/edit-role/:id',             element: checkLogin(<EditRole />) },
