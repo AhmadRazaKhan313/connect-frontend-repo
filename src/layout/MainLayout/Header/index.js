@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { hasPermission } from 'utils/auth';
 import { useState, useEffect } from 'react';
 
 // material-ui
@@ -16,7 +17,6 @@ import CustomMessageModal from './CustomMessageModal';
 
 import useAppContext from 'context/useAppContext';
 import jwt from 'jwtservice/jwtService';
-import { STAFF_TYPES } from 'utils/Constants';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -26,8 +26,8 @@ const Header = ({ handleLeftDrawerToggle }) => {
 
     const [showModal, setShowModal] = useState(false);
     const user = jwt.getUser();
-    const isSuperAdmin = user?.type === 'superadmin';
-    const isAdmin = user?.type === STAFF_TYPES.admin;
+    const canSeeSms = hasPermission('user.view');
+    const canSendSms = hasPermission('user.edit');
 
     const sendExpiryAlert = () => {
         jwt.sendExpiryAlert()
@@ -80,7 +80,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
             <Box sx={{ flexGrow: 1 }} />
 
             {/* SMS Balance — only for admin/staff, not superadmin */}
-            {!isSuperAdmin && (
+            {canSeeSms && (
                 <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, gap: 0.5 }}>
                     <SmsIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
                     <Typography variant="body2" color="text.secondary">
@@ -96,7 +96,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
             )}
 
             {/* Send Message — only for admin */}
-            {isAdmin && (
+            {canSendSms && (
                 <>
                     <Chip
                         label="Send Message"

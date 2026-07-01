@@ -13,9 +13,7 @@ const LogoSection = () => {
     const { orgBranding } = useAppContext();
 
     const currentUser = jwt.getUser();
-    const isPlatformSA =
-        currentUser?.type === 'platformSuperAdmin' ||
-        currentUser?.role === 'platformSuperAdmin';
+    const isPlatformSA = currentUser?.isPlatform === true;
 
     // platformSuperAdmin → default Connect logo
     // Org users → org logo + org name

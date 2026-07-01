@@ -18,9 +18,7 @@ function AddISP() {
     const [organizations, setOrganizations] = useState([]);
 
     const currentUser = jwt.getUser();
-    const isPlatformSuperAdmin =
-        currentUser?.role === 'platformSuperAdmin' ||
-        currentUser?.type === 'platformSuperAdmin';
+    const isPlatformSuperAdmin = false; // strict tenant isolation: ISPs are always created in the caller's own org
 
     useEffect(() => {
         if (isPlatformSuperAdmin) {

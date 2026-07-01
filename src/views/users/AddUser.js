@@ -9,7 +9,7 @@ import { AddUserValidationSchema } from '../../utils/ValidationSchemas';
 
 function AddUser() {
     const theme = useTheme();
-    const isPlatformSuperAdmin = jwt.getUser()?.role === 'platformSuperAdmin';
+    const isPlatformSuperAdmin = false; // strict tenant isolation: users are always created in the caller's own org
 
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);

@@ -6,7 +6,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import { STAFF_TYPES } from '../../utils/Constants';
+import { hasPermission } from 'utils/auth';
 import { useLocation, useNavigate } from 'react-router';
 import { Alert, Button } from '@mui/material';
 import { useState } from 'react';
@@ -109,7 +109,7 @@ export default function AllPackages() {
                                     <TableCell style={style}> Purchase Rate </TableCell>
                                     <TableCell style={style}> Sale Rate </TableCell>
                                     <TableCell style={style}> Validity </TableCell>
-                                    {jwt.getUser()?.type === STAFF_TYPES.admin && <TableCell style={style}> Action </TableCell>}
+                                    {hasPermission('package.edit') && <TableCell style={style}> Action </TableCell>}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -124,7 +124,7 @@ export default function AllPackages() {
                                             <TableCell>{row?.purchaseRate}</TableCell>
                                             <TableCell>{row?.saleRate}</TableCell>
                                             <TableCell>{row?.validity}</TableCell>
-                                            {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                            {hasPermission('package.edit') && (
                                                 <TableCell>
                                                     <EditButton id={row?.id} color={row?.color} data={row} />
                                                 </TableCell>

@@ -10,7 +10,7 @@ import { Alert, Box, Button, IconButton, Tooltip, Typography } from '@mui/materi
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { STAFF_TYPES } from 'utils/Constants';
+import { hasPermission } from 'utils/auth';
 import useOrgTheme from 'utils/useOrgTheme';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -35,7 +35,7 @@ export default function AllUsers() {
     const [organizations, setOrganizations] = useState([]);
 
     const navigate = useNavigate();
-    const isPlatformSuperAdmin = jwt.getUser()?.role === 'platformSuperAdmin';
+    const isPlatformSuperAdmin = false; // strict tenant isolation: users are always created in the caller's own org
 
     const { data, setData, filteredData, setFilteredData, setFilters } = useAppContext();
     const { tableHeaderStyle: style, primaryColor } = useOrgTheme();
@@ -187,7 +187,7 @@ export default function AllUsers() {
                                                         <EditIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
-                                                {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                                {hasPermission('user.delete') && (
                                                     <Tooltip title="Delete">
                                                         <IconButton size="small" color="error" onClick={() => handleModalOpen(row?.id)}>
                                                             <DeleteIcon fontSize="small" />

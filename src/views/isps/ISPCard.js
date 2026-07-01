@@ -18,6 +18,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
 import jwt from 'jwtservice/jwtService';
+import { hasAnyPermission } from 'utils/auth';
 
 /* ─── helpers ─────────────────────────────────────────────── */
 
@@ -142,14 +143,7 @@ const ISPCard = ({ isp, isLoading }) => {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
 
-    const currentUser = jwt.getUser();
-    const userType = currentUser?.type;
-    const userRole = currentUser?.role;
-
-    const isAdmin =
-        userType === 'platformSuperAdmin' || userRole === 'platformSuperAdmin' ||
-        userType === 'orgSuperAdmin'      || userRole === 'orgSuperAdmin' ||
-        userType === 'orgAdmin'           || userRole === 'orgAdmin';
+    const isAdmin = hasAnyPermission(['isp.edit', 'isp.delete']);
 
     const handleClick  = (e) => setAnchorEl(e.currentTarget);
     const handleClose  = () => setAnchorEl(null);

@@ -11,7 +11,6 @@ import { gridSpacing } from 'store/constant';
 import IspGrandSummaryCard from './IspGrandSummaryCard';
 import RemainingProfitCard from './RemainingProfitCard';
 import PartnerGrandSummaryCard from './PartnerGrandSummaryCard';
-import { STAFF_TYPES } from 'utils/Constants';
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
 const MASTER_ORG_ID = '69e6ea81f25b8158cf1c62ac';
@@ -201,7 +200,7 @@ const Dashboard = () => {
                     </Grid>
                     <MyDivider />
                     <>
-                        {(jwt.getUser()?.type === STAFF_TYPES.partner
+                        {(jwt.getUser()?.isPartner === true
                             ? partnersExpenses.filter((item) => item?.partnerId === jwt.getUser()?.id)
                             : partnersExpenses
                         ).map((data, index) => (
