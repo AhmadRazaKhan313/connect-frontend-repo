@@ -7,23 +7,21 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import {
-    Alert, Box, Button, Dialog, DialogActions, DialogContent,
-    DialogTitle, FormControl, Grid, IconButton,
-    InputLabel, MenuItem, OutlinedInput, Select, Tooltip, Typography, Chip
+    Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent,
+    DialogTitle, FormControl, FormControlLabel, Grid, IconButton,
+    InputLabel, OutlinedInput, Tooltip, Typography, Chip, Divider, Select, MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import LockIcon from '@mui/icons-material/Lock';
-import { STAFF_TYPES } from 'utils/Constants';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import jwt from 'jwtservice/jwtService';
 import useAppContext from 'context/useAppContext';
 import useOrgTheme from 'utils/useOrgTheme';
 
-function createData(id, fullname, type, share, email, cnic, mobile, address, roleId) {
-    return { id, fullname, type, share, email, cnic, mobile, address, roleId };
+function createData(id, fullname, roleId, roleName, isPartner, share, email, cnic, mobile, address) {
+    return { id, fullname, roleId: roleId || '', roleName: roleName || '', isPartner: !!isPartner, share, email, cnic, mobile, address };
 }
 
 export default function AllStaff() {
@@ -32,8 +30,8 @@ export default function AllStaff() {
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const [roles, setRoles] = useState([]);
 
+    const [roles, setRoles] = useState([]);
     const [editOpen, setEditOpen] = useState(false);
     const [editStaff, setEditStaff] = useState(null);
     const [editLoading, setEditLoading] = useState(false);
@@ -43,10 +41,8 @@ export default function AllStaff() {
     const { tableHeaderStyle: style, primaryColor } = useOrgTheme();
     const navigate = useNavigate();
 
-    // Logged in user
     const currentUser = jwt.getUser();
     const currentUserId = currentUser?.id || currentUser?._id;
-
     const iconStyle = { color: primaryColor };
 
     const handleChangePage = (event, newPage) => setPage(newPage);
@@ -55,13 +51,22 @@ export default function AllStaff() {
         setPage(0);
     };
 
+    const loadRoles = () => {
+        jwt.getCustomRoles().then((res) => setRoles(res?.data || [])).catch(() => setRoles([]));
+    };
+
     const loadStaff = () => {
         setIsLoading(true);
         jwt.getAllStaffs()
             .then((res) => {
                 setIsLoading(false);
                 const rowsData = res?.data?.map((item) =>
-                    createData(item?.id, item?.fullname, item?.type, item?.share, item?.email, item?.cnic, item?.mobile, item?.address, item?.roleId)
+                    createData(
+                        item?.id, item?.fullname,
+                        item?.roleId?.id || item?.roleId, item?.roleId?.name,
+                        item?.isPartner, item?.share,
+                        item?.email, item?.cnic, item?.mobile, item?.address
+                    )
                 );
                 setData(rowsData || []);
             })
@@ -73,27 +78,23 @@ export default function AllStaff() {
     };
 
     useEffect(() => {
-        setFilters(['fullname', 'type', 'share', 'cnic', 'mobile', 'email', 'address']);
+        setFilters(['fullname', 'cnic', 'mobile', 'email', 'address']);
+        loadRoles();
         loadStaff();
-        jwt.getAllRoles()
-            .then((res) => {
-                // Sirf custom roles — system roles (isSystem:true) role dropdown mein nahi aane chahiye
-                const customRoles = (res?.data || []).filter((r) => !r.isSystem);
-                setRoles(customRoles);
-            })
-            .catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         setFilteredData(data);
     }, [data]);
 
+    const isSelf = (row) => row.id === currentUserId;
+
     const handleEditOpen = (row) => {
         setEditStaff({ ...row, password: '' });
         setEditError('');
         setEditOpen(true);
     };
-
     const handleEditClose = () => {
         setEditOpen(false);
         setEditStaff(null);
@@ -105,32 +106,21 @@ export default function AllStaff() {
             return;
         }
         setEditLoading(true);
-        // Bug fix: pura row spread karne ki bajaye sirf specific allowed fields bhejo
-        // Isse accidental password overwrite ya immutable field errors nahi hote
         const payload = {
-            fullname:  editStaff.fullname,
-            email:     editStaff.email,
-            mobile:    editStaff.mobile,
-            cnic:      editStaff.cnic,
-            address:   editStaff.address,
-            type:      editStaff.type,
-            role:      editStaff.role,
-            share:     editStaff.share,
+            fullname: editStaff.fullname,
+            email: editStaff.email,
+            mobile: editStaff.mobile,
+            cnic: editStaff.cnic,
+            address: editStaff.address
         };
-
-        // roleId: sirf tab bhejo jab valid value ho
-        if (editStaff.roleId) payload.roleId = editStaff.roleId;
-
-        // Password: sirf tab bhejo jab actually fill kiya ho
+        // Access fields  not editable for your own account.
+        if (!isSelf(editStaff)) {
+            payload.roleId = editStaff.roleId;
+            payload.isPartner = editStaff.isPartner;
+            payload.share = editStaff.isPartner ? Number(editStaff.share || 0) : 0;
+        }
         if (editStaff.password && editStaff.password.trim()) {
             payload.password = editStaff.password;
-        }
-
-        // Apna account edit kar rahe hain to role/type nahi bhejna
-        if (editStaff.id === currentUserId) {
-            delete payload.role;
-            delete payload.roleId;
-            delete payload.type;
         }
 
         jwt.updateStaff(editStaff.id, payload)
@@ -147,7 +137,7 @@ export default function AllStaff() {
 
     const handleDelete = (row) => {
         if (row.id === currentUserId) {
-            alert('Aap apna khud ka account delete nahi kar sakte');
+            alert('You cannot delete your own account');
             return;
         }
         if (!window.confirm(`Delete staff "${row.fullname}"?`)) return;
@@ -155,9 +145,6 @@ export default function AllStaff() {
             .then(() => loadStaff())
             .catch((err) => alert(err?.response?.data?.message || 'Delete failed'));
     };
-
-    // Kya yeh logged-in user ka apna row hai
-    const isSelf = (row) => row.id === currentUserId;
 
     return (
         <Paper sx={{ width: '100%', overflow: 'hidden', mt: 4 }}>
@@ -184,7 +171,8 @@ export default function AllStaff() {
                                 <TableRow>
                                     <TableCell style={style}>Sr.</TableCell>
                                     <TableCell style={style}>Name</TableCell>
-                                    <TableCell style={style}>Type</TableCell>
+                                    <TableCell style={style}>Role</TableCell>
+                                    <TableCell style={style}>Partner</TableCell>
                                     <TableCell style={style}>Share</TableCell>
                                     <TableCell style={style}>Email</TableCell>
                                     <TableCell style={style}>Mobile</TableCell>
@@ -200,22 +188,21 @@ export default function AllStaff() {
                                         hover
                                         sx={{
                                             '&:last-child td': { border: 0 },
-                                            backgroundColor: isSelf(row)
-                                                ? '#e8f5e9'  // Apna row green highlight
-                                                : row?.type === STAFF_TYPES.partner ? '#f0f0d2' : 'transparent'
+                                            backgroundColor: isSelf(row) ? '#e8f5e9' : row?.isPartner ? '#f0f0d2' : 'transparent'
                                         }}
                                     >
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 {row?.fullname}
-                                                {isSelf(row) && (
-                                                    <Chip label="You" size="small" color="success" sx={{ fontSize: 10, height: 18 }} />
-                                                )}
+                                                {isSelf(row) && <Chip label="You" size="small" color="success" sx={{ fontSize: 10, height: 18 }} />}
                                             </Box>
                                         </TableCell>
-                                        <TableCell>{row?.type}</TableCell>
-                                        <TableCell>{row?.share}</TableCell>
+                                        <TableCell>
+                                            {row?.roleName ? <Chip label={row.roleName} size="small" variant="outlined" /> : '-'}
+                                        </TableCell>
+                                        <TableCell>{row?.isPartner ? 'Yes' : '-'}</TableCell>
+                                        <TableCell>{row?.isPartner ? row?.share : '-'}</TableCell>
                                         <TableCell>{row?.email}</TableCell>
                                         <TableCell>{row?.mobile}</TableCell>
                                         <TableCell>{row?.cnic}</TableCell>
@@ -227,13 +214,9 @@ export default function AllStaff() {
                                                         <EditIcon fontSize="small" sx={iconStyle} />
                                                     </IconButton>
                                                 </Tooltip>
-                                                <Tooltip title={isSelf(row) ? 'Apna account delete nahi kar sakte' : 'Delete'}>
+                                                <Tooltip title={isSelf(row) ? 'You cannot delete your own account' : 'Delete'}>
                                                     <span>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleDelete(row)}
-                                                            disabled={isSelf(row)}
-                                                        >
+                                                        <IconButton size="small" onClick={() => handleDelete(row)} disabled={isSelf(row)}>
                                                             <DeleteIcon fontSize="small" sx={{ color: isSelf(row) ? '#ccc' : '#d32f2f' }} />
                                                         </IconButton>
                                                     </span>
@@ -258,149 +241,104 @@ export default function AllStaff() {
             )}
 
             {/* Edit Dialog */}
-            <Dialog open={editOpen} onClose={handleEditClose} maxWidth="md" fullWidth>
+            <Dialog open={editOpen} onClose={handleEditClose} maxWidth="sm" fullWidth>
                 <DialogTitle>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         Edit Staff
-                        {editStaff && isSelf(editStaff) && (
-                            <Chip label="Your Account" size="small" color="success" />
-                        )}
+                        {editStaff && isSelf(editStaff) && <Chip label="Your Account" size="small" color="success" />}
                     </Box>
                 </DialogTitle>
                 <DialogContent>
                     {editError && <Alert severity="error" sx={{ mb: 2 }}>{editError}</Alert>}
                     {editStaff && isSelf(editStaff) && (
-                        <Alert severity="info" sx={{ mb: 2 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <LockIcon fontSize="small" />
-                                Aap apna Role aur Type nahi badal sakte — sirf profile info update ho sakti hai
-                            </Box>
-                        </Alert>
+                        <Alert severity="info" sx={{ mb: 2 }}>You cannot change your own role  only profile info.</Alert>
                     )}
                     {editStaff && (
                         <Grid container spacing={2} sx={{ mt: 0.5 }}>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Full Name</InputLabel>
-                                    <OutlinedInput
-                                        label="Full Name"
-                                        value={editStaff.fullname}
-                                        onChange={(e) => setEditStaff({ ...editStaff, fullname: e.target.value })}
-                                    />
+                                    <OutlinedInput label="Full Name" value={editStaff.fullname}
+                                        onChange={(e) => setEditStaff({ ...editStaff, fullname: e.target.value })} />
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Email</InputLabel>
-                                    <OutlinedInput
-                                        label="Email"
-                                        value={editStaff.email}
-                                        onChange={(e) => setEditStaff({ ...editStaff, email: e.target.value })}
-                                    />
+                                    <OutlinedInput label="Email" value={editStaff.email}
+                                        onChange={(e) => setEditStaff({ ...editStaff, email: e.target.value })} />
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>New Password (optional)</InputLabel>
-                                    <OutlinedInput
-                                        label="New Password (optional)"
-                                        type="password"
-                                        value={editStaff.password}
-                                        onChange={(e) => setEditStaff({ ...editStaff, password: e.target.value })}
-                                    />
+                                    <OutlinedInput label="New Password (optional)" type="password" value={editStaff.password}
+                                        onChange={(e) => setEditStaff({ ...editStaff, password: e.target.value })} />
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Mobile</InputLabel>
-                                    <OutlinedInput
-                                        label="Mobile"
-                                        value={editStaff.mobile}
-                                        onChange={(e) => setEditStaff({ ...editStaff, mobile: e.target.value })}
-                                    />
+                                    <OutlinedInput label="Mobile" value={editStaff.mobile}
+                                        onChange={(e) => setEditStaff({ ...editStaff, mobile: e.target.value })} />
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>CNIC</InputLabel>
-                                    <OutlinedInput
-                                        label="CNIC"
-                                        value={editStaff.cnic}
-                                        onChange={(e) => setEditStaff({ ...editStaff, cnic: e.target.value })}
-                                    />
+                                    <OutlinedInput label="CNIC" value={editStaff.cnic}
+                                        onChange={(e) => setEditStaff({ ...editStaff, cnic: e.target.value })} />
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Address</InputLabel>
-                                    <OutlinedInput
-                                        label="Address"
-                                        value={editStaff.address}
-                                        onChange={(e) => setEditStaff({ ...editStaff, address: e.target.value })}
-                                    />
+                                    <OutlinedInput label="Address" value={editStaff.address}
+                                        onChange={(e) => setEditStaff({ ...editStaff, address: e.target.value })} />
                                 </FormControl>
                             </Grid>
 
-                            {/* Staff Type — apna type nahi badal sakta */}
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth disabled={isSelf(editStaff)}>
-                                    <InputLabel>Staff Type</InputLabel>
-                                    <Select
-                                        label="Staff Type"
-                                        value={['partner', 'staff', 'orgStaff', 'orgAdmin'].includes(editStaff.type) ? editStaff.type : ''}
-                                        onChange={(e) => setEditStaff({ ...editStaff, type: e.target.value })}
-                                    >
-                                        <MenuItem value="orgAdmin">Org Admin</MenuItem>
-                                        <MenuItem value="orgStaff">Org Staff</MenuItem>
-                                        <MenuItem value="partner">Partner</MenuItem>
-                                        <MenuItem value="staff">Staff</MenuItem>
-                                    </Select>
-                                    {isSelf(editStaff) && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                                            <LockIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
-                                            <Typography variant="caption" color="text.secondary">Apna type nahi badal sakte</Typography>
-                                        </Box>
+                            {!isSelf(editStaff) && (
+                                <>
+                                    <Grid item xs={12}>
+                                        <Divider sx={{ my: 1 }} />
+                                        <FormControl fullWidth>
+                                            <InputLabel id="edit-role-label">Role</InputLabel>
+                                            <Select
+                                                labelId="edit-role-label"
+                                                label="Role"
+                                                value={editStaff.roleId || ''}
+                                                onChange={(e) => setEditStaff({ ...editStaff, roleId: e.target.value })}
+                                            >
+                                                {roles.map((r) => (
+                                                    <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={editStaff.isPartner}
+                                                    onChange={(e) => setEditStaff({ ...editStaff, isPartner: e.target.checked, share: e.target.checked ? editStaff.share : 0 })}
+                                                />
+                                            }
+                                            label="Financial Partner (profit sharing)"
+                                        />
+                                    </Grid>
+                                    {editStaff.isPartner && (
+                                        <Grid item xs={12} md={6}>
+                                            <FormControl fullWidth>
+                                                <InputLabel>Profit Share %</InputLabel>
+                                                <OutlinedInput label="Profit Share %" type="number" value={editStaff.share}
+                                                    inputProps={{ min: 0, max: 100 }}
+                                                    onChange={(e) => setEditStaff({ ...editStaff, share: e.target.value })} />
+                                            </FormControl>
+                                        </Grid>
                                     )}
-                                </FormControl>
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Share</InputLabel>
-                                    <OutlinedInput
-                                        label="Share"
-                                        type="number"
-                                        value={editStaff.share}
-                                        onChange={(e) => setEditStaff({ ...editStaff, share: e.target.value })}
-                                        disabled={editStaff.type === 'staff' || editStaff.type === 'orgStaff'}
-                                    />
-                                </FormControl>
-                            </Grid>
-
-                            {/* Role assign — apna role nahi badal sakta, system roles nahi dikhte */}
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth disabled={isSelf(editStaff)}>
-                                    <InputLabel>Assign Role (Optional)</InputLabel>
-                                    <Select
-                                        label="Assign Role (Optional)"
-                                        value={editStaff.roleId || ''}
-                                        onChange={(e) => setEditStaff({ ...editStaff, roleId: e.target.value })}
-                                    >
-                                        <MenuItem value="">-- No Role --</MenuItem>
-                                        {roles.map((role) => (
-                                            <MenuItem key={role.id} value={role.id}>
-                                                {role.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {isSelf(editStaff) && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                                            <LockIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
-                                            <Typography variant="caption" color="text.secondary">Apna role nahi badal sakte</Typography>
-                                        </Box>
-                                    )}
-                                </FormControl>
-                            </Grid>
+                                </>
+                            )}
                         </Grid>
                     )}
                 </DialogContent>

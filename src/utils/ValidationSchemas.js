@@ -61,16 +61,12 @@ export const AddStaffValidationSchema = Yup.object().shape({
     address: Yup.string().required('Address is required'),
     email: Yup.string().email().required('Email is required'),
     password: Yup.string().required('Password is required'),
-    type: Yup.string().required('Staff Type is required'),
-    share: Yup.number().when('type', {
-        is: (val) => val === 'partner',
-        then: Yup.number().required('Share is required for Partner'),
+    roleId: Yup.string().required('A role is required'),
+    isPartner: Yup.boolean(),
+    share: Yup.number().when('isPartner', {
+        is: true,
+        then: Yup.number().min(0).max(100).required('Share is required for Partner'),
         otherwise: Yup.number()
-    }),
-    roleId: Yup.string().when('type', {
-        is: (val) => val === 'orgStaff' || val === 'partner',
-        then: Yup.string().required('Role assign karna zaroori hai'),
-        otherwise: Yup.string().nullable().notRequired()
     }),
     sendWelcomeMessage: Yup.boolean().required()
 });
