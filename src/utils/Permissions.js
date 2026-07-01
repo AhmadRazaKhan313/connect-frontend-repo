@@ -21,6 +21,11 @@ const PERMISSIONS = [
     { key: 'staff.create', label: 'Add Staff', group: 'Staff Management' },
     { key: 'staff.edit', label: 'Edit Staff', group: 'Staff Management' },
     { key: 'staff.delete', label: 'Delete Staff', group: 'Staff Management' },
+    // Roles
+    { key: 'role.view', label: 'View Roles', group: 'Roles & Permissions' },
+    { key: 'role.create', label: 'Create Role', group: 'Roles & Permissions' },
+    { key: 'role.edit', label: 'Edit Role', group: 'Roles & Permissions' },
+    { key: 'role.delete', label: 'Delete Role', group: 'Roles & Permissions' },
     // Entry
     { key: 'entry.view', label: 'View Entries', group: 'Entries' },
     { key: 'entry.create', label: 'Add Entry', group: 'Entries' },
@@ -29,11 +34,13 @@ const PERMISSIONS = [
     // Expense
     { key: 'expense.view', label: 'View Expenses', group: 'Expenses' },
     { key: 'expense.create', label: 'Add Expense', group: 'Expenses' },
+    { key: 'expense.edit', label: 'Edit Expense', group: 'Expenses' },
     { key: 'expense.approve', label: 'Approve Expense', group: 'Expenses' },
     { key: 'expense.delete', label: 'Delete Expense', group: 'Expenses' },
     // Invoice
     { key: 'invoice.view', label: 'View Invoices', group: 'Invoices' },
     { key: 'invoice.create', label: 'Create Invoice', group: 'Invoices' },
+    { key: 'invoice.edit', label: 'Edit Invoice', group: 'Invoices' },
     { key: 'invoice.delete', label: 'Delete Invoice', group: 'Invoices' },
     // Extra Income
     { key: 'extraIncome.view', label: 'View Extra Income', group: 'Extra Income' },

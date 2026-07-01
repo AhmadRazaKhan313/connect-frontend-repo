@@ -15,10 +15,3 @@ export const PAYMENT_METHODS = [
     { key: 'pending', value: 'Pending' }
 ];
 
-export const STAFF_TYPES = {
-    platformSuperAdmin: 'platformSuperAdmin',
-    orgSuperAdmin: 'orgSuperAdmin',
-    admin: 'orgAdmin',
-    partner: 'partner',
-    staff: 'orgStaff'
-};
