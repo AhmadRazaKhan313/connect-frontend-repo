@@ -1,16 +1,9 @@
 import RouterIcon from '@mui/icons-material/Router';
-import jwt from 'jwtservice/jwtService';
+import { hasAnyPermission } from 'utils/auth';
 
-const userType = jwt.getUser()?.type;
-const userRole = jwt.getUser()?.role;
-
-const canAddISP =
-    userType === 'platformSuperAdmin' ||
-    userRole === 'platformSuperAdmin' ||
-    userType === 'orgSuperAdmin' ||
-    userRole === 'orgSuperAdmin' ||
-    userType === 'orgAdmin' ||
-    userRole === 'orgAdmin';
+// Show the "Add ISP" sub-menu only to accounts that can manage ISPs
+// (SUPER_ADMIN is covered by hasAnyPermission).
+const canManageISP = hasAnyPermission(['isp.create', 'isp.edit', 'isp.delete']);
 
 const isps = {
     id: 'isps',
@@ -20,11 +13,11 @@ const isps = {
         {
             id: 'isps-collapse',
             title: 'ISPs',
-            type: canAddISP ? 'collapse' : 'item',
+            type: canManageISP ? 'collapse' : 'item',
             icon: RouterIcon,
-            url: canAddISP ? undefined : '/dashboard/all-isps',
+            url: canManageISP ? undefined : '/dashboard/all-isps',
             breadcrumbs: false,
-            ...(canAddISP && {
+            ...(canManageISP && {
                 children: [
                     {
                         id: 'all-isps',
