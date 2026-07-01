@@ -14,7 +14,7 @@ import jwt from 'jwtservice/jwtService';
 import moment from 'moment';
 import { getPaymentMethodNameByKey } from 'utils/Functions';
 import TotalIncomeDarkCard from 'views/dashboard/Default/TotalIncomeDarkCard';
-import { STAFF_TYPES } from '../../utils/Constants';
+import { hasPermission } from 'utils/auth';
 import useAppContext from 'context/useAppContext';
 import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
@@ -258,7 +258,7 @@ export default function AllEntries() {
                                             <TableCell style={style}>IP Rate</TableCell>
                                             <TableCell style={style}>Amount</TableCell>
                                             <TableCell style={style}>Expiry Date</TableCell>
-                                            {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                            {hasPermission('entry.edit') && (
                                                 <TableCell style={style} colSpan={3}>
                                                     Action
                                                 </TableCell>
@@ -280,7 +280,7 @@ export default function AllEntries() {
                                                     <TableCell>{row?.staticIpSaleRate}</TableCell>
                                                     <TableCell>{row?.saleRate}</TableCell>
                                                     <TableCell>{row?.expiryDate}</TableCell>
-                                                    {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                                    {hasPermission('entry.edit') && (
                                                         <>
                                                             <TableCell>
                                                                 <Button

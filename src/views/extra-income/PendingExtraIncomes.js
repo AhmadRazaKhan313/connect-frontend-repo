@@ -14,7 +14,7 @@ import jwt from 'jwtservice/jwtService';
 import moment from 'moment';
 import { getPaymentMethodNameByKey } from 'utils/Functions';
 import TotalIncomeDarkCard from 'views/dashboard/Default/TotalIncomeDarkCard';
-import { STAFF_TYPES } from '../../utils/Constants';
+import { hasPermission } from 'utils/auth';
 import useAppContext from 'context/useAppContext';
 import { useNavigate } from 'react-router';
 
@@ -166,7 +166,7 @@ export default function PendingExtraIncomes() {
                                             <TableCell style={style}>Payment Method</TableCell>
                                             <TableCell style={style}>TID</TableCell>
                                             <TableCell style={style}>Details</TableCell>
-                                            {/* {jwt.getUser()?.type === STAFF_TYPES.admin && ( */}
+                                            {/* {hasPermission('extraIncome.edit') && ( */}
                                             <TableCell style={{ ...style, textAlign: 'center' }} colSpan={2}>
                                                 Action
                                             </TableCell>
@@ -198,7 +198,7 @@ export default function PendingExtraIncomes() {
                                                             Complete
                                                         </Button>
                                                     </TableCell>
-                                                    {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                                    {hasPermission('extraIncome.edit') && (
                                                         <>
                                                             <TableCell>
                                                                 <Button

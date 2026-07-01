@@ -7,7 +7,7 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { Alert, Button, FormControl, Grid, InputLabel, OutlinedInput } from '@mui/material';
-import { STAFF_TYPES } from 'utils/Constants';
+import { hasPermission } from 'utils/auth';
 import useOrgTheme from 'utils/useOrgTheme';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -217,7 +217,7 @@ export default function PendingExpenses() {
                                             <TableCell style={style}>Payment Method</TableCell>
                                             <TableCell style={style}>TID/Cheque#</TableCell>
                                             <TableCell style={style}>Staff</TableCell>
-                                            {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                            {hasPermission('expense.approve') && (
                                                 <TableCell colSpan={2} style={style} align="center">
                                                     Action
                                                 </TableCell>
@@ -239,7 +239,7 @@ export default function PendingExpenses() {
                                                     <TableCell>{row?.paymentMethod}</TableCell>
                                                     <TableCell>{row?.tid}</TableCell>
                                                     <TableCell>{row?.staff}</TableCell>
-                                                    {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                                    {hasPermission('expense.approve') && (
                                                         <>
                                                             <TableCell>
                                                                 <ApproveButton id={row?.id} />

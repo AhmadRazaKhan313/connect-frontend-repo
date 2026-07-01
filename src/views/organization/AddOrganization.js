@@ -157,7 +157,6 @@ function AddOrganization() {
         },
         adminUser: {
             name: '', email: '', password: '',
-            type: 'orgAdmin',
             mobile: '00000000000', address: 'N/A', cnic: '0000000000000', share: 0,
         }
     };

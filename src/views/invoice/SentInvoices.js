@@ -7,7 +7,7 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { Alert, Button, FormControl, Grid, InputLabel, MenuItem, OutlinedInput, Select } from '@mui/material';
-import { STAFF_TYPES } from 'utils/Constants';
+import { hasPermission } from 'utils/auth';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import jwt from 'jwtservice/jwtService';
@@ -203,7 +203,7 @@ export default function SentInvoices() {
                                             <TableCell style={style}>Payment Method</TableCell>
                                             <TableCell style={style}>Check#/TID</TableCell>
                                             <TableCell style={style}>Comments</TableCell>
-                                            {jwt.getUser()?.type === STAFF_TYPES.admin && <TableCell style={style}>Action</TableCell>}
+                                            {hasPermission('invoice.delete') && <TableCell style={style}>Action</TableCell>}
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -217,7 +217,7 @@ export default function SentInvoices() {
                                                     <TableCell>{row?.paymentMethod}</TableCell>
                                                     <TableCell>{row?.tid}</TableCell>
                                                     <TableCell>{row?.comments}</TableCell>
-                                                    {jwt.getUser()?.type === STAFF_TYPES.admin && (
+                                                    {hasPermission('invoice.delete') && (
                                                         <TableCell>
                                                             <Button
                                                                 variant="contained"
